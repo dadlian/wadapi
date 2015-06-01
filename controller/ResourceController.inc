@@ -73,6 +73,20 @@
 			return true;
 		}
 		
+		protected function options(){
+			$payload = array("options"=>array());
+			foreach(Mirror::reflectClass($this)->getMethods() as $method){
+				$methodName = $method->getName();
+				if(in_array($methodName,array("get","post","put","delete","options"))){
+					$payload["options"][] = strtoupper($methodName);
+				}
+			}
+			
+			$uri = "http://".SettingsManager::getSetting("install","urlroot")."/".RequestHandler::getRequestURI();
+			ResponseHandler::retrieved($payload,$uri);
+		
+		}
+		
 		protected abstract function isInvalid();
 		protected abstract function isConsistent($modified,$eTag);
 		protected abstract function assemblePayload($object);

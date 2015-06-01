@@ -13,6 +13,13 @@
 				ResponseHandler::missing("The requested endpoint ".RequestHandler::getRequestURI()." does not exist on this server.");
 			}
 			
+			//Answer OPTIONS requests without requiring authorisation
+			if(strtoupper(RequestHandler::getMethod()) == "OPTIONS"){
+				$controllerClass = RequestHandler::getEndpoint()->getController();
+				$controller = new $controllerClass(RequestHandler::getURIArguments());
+				$controller->options();
+			}
+			
 			//Ensure request is authenticated
 			if(!RequestHandler::getAuthorisation()){
 				ResponseHandler::unauthorised("Please use Basic Authentication to authorise this request.");

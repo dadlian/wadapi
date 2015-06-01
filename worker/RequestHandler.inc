@@ -163,12 +163,12 @@
 		}
 		
 		public static function checksConsistency(){
-			return self::$request->viewFromHeaders("X-If-Unmodified-Since") || self::$request->viewFromHeaders("X-If-Match");
+			return self::$request->viewFromHeaders("If-Unmodified-Since") || self::$request->viewFromHeaders("If-Match");
 		}
 		
 		public static function getConsistencyTags(){
-			$modifiedDate = date("U",strtotime(self::$request->viewFromHeaders("X-If-Unmodified-Since")));
-			return array("ifUnmodifiedSince"=>$modifiedDate,"ifMatch"=>self::$request->viewFromHeaders("X-If-Match"));
+			$modifiedDate = date("U",strtotime(self::$request->viewFromHeaders("If-Unmodified-Since")));
+			return array("ifUnmodifiedSince"=>$modifiedDate,"ifMatch"=>self::$request->viewFromHeaders("If-Match"));
 		}
 		
 		public static function getSuggestedURI(){
@@ -238,7 +238,6 @@
 			//Set request body to raw input value
 			$body = file_get_contents("php://input");
 			
-			
 			ResponseHandler::changeContentType(self::$acceptables['Content-Type'][0]);
 			ResponseHandler::changeContentCharset(self::$acceptables['Content-Charset'][0]);
 			ResponseHandler::changeContentLanguage(self::$acceptables['Content-Language'][0]);
@@ -257,6 +256,7 @@
 			}
 			
 			$acceptedValues = array();
+			$unsupportedValues = array();
 			foreach(explode(",",$acceptHeader) as $value){
 				$valueParts = explode(";",$value);
 				
@@ -266,13 +266,24 @@
 					$priority = floatval($priorityParts[1]);
 				}
 				
-				$acceptedValues[strtolower($valueParts[0])] = $priority;
+				$requestedValue = strtolower($valueParts[0]);
+				if(in_array($requestedValue,$supportedValues)){
+					$acceptedValues[$requestedValue] = $priority;
+				}else if($requestedValue == "*/*" && !in_array($defaultValue,$acceptedValues)){
+					$acceptedValues[$defaultValue] = $priority;
+				}else{
+					$unsupportedValues[] = $requestedValue;
+				}
 			}
 			
 			arsort($acceptedValues);
 			self::$acceptables[$type] = array_keys($acceptedValues);
 			
-			return array_diff(array_keys($acceptedValues),$supportedValues);
+			if(!$acceptedValues){
+				return $unsupportedValues;
+			}else{
+				return array();
+			}
 		}
 	}
 ?>

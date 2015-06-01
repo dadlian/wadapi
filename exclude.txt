@@ -1,0 +1,10 @@
+.bash*
+.cpanel*
+.trash
+.ssh
+.ht*
+.zshrc
+.viminfo
+.lastlogin
+.dns
+.contactemail
