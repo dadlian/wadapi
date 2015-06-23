@@ -1,0 +1,9 @@
+Create WHM Account for new myWadapi User
+Create and Initialise Database for new user API
+Add new User to wadapi group
+Create Subdomain in DNS Zone Editor (Benna)
+Create myWadapi Project Directory
+Reassign user's home directory and copy .bashrc and .ssh files
+Point subdomain DocumentRoot to new home directory
+Setup .htaccess and wadadli.php files in project home
+Create 'api' folder in project root and upload files
