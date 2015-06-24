@@ -7,3 +7,6 @@ Reassign user's home directory and copy .bashrc and .ssh files
 Point subdomain DocumentRoot to new home directory
 Setup .htaccess and wadadli.php files in project home
 Create 'api' folder in project root and upload files
+Register API with Chantico
+Update Settings with API ID
+Create Initial Managed User for API
