@@ -4,12 +4,12 @@ declare -r EXCLUDES=$(dirname $BASH_SOURCE)/exclude.txt
 declare -r REPO_ROOT=$(dirname $BASH_SOURCE)
 declare -r PAYLOAD=$(dirname $BASH_SOURCE)/payload
 
-if [ "$1" = "dev" ]; then
-	declare -r TARGET_DIR=/var/www/html/wadapi
+if [ "$1" = "sandbox" ]; then
+	declare -r TARGET_DIR=sandbox@mywadapi.com:
 elif [ "$1" = "prod" ]; then
 	declare -r TARGET_DIR=wadapi@mywadapi.com:
 else
-	echo "Please specify one of [dev/prod] as deploy target"
+	echo "Please specify one of [sandbox/prod] as deploy target"
 	exit
 fi
 
