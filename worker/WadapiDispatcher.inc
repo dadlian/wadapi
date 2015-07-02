@@ -10,7 +10,7 @@
 			
 			//If there is no controller mapped to this endpoint
 			if(!RequestHandler::getEndpoint() || !class_exists(RequestHandler::getEndpoint()->getController()) || !Mirror::reflectClass(RequestHandler::getEndpoint()->getController())->descendsFrom("ResourceController")){
-				ResponseHandler::missing("The requested endpoint ".RequestHandler::getRequestURI()." does not exist on this server.");
+				ResponseHandler::missing("The requested endpoint /".RequestHandler::getRequestURI()." does not exist on this server.");
 			}
 			
 			//Answer OPTIONS requests without requiring authorisation

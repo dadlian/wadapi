@@ -1,12 +1,12 @@
 Create WHM Account for new myWadapi User
+Create Subdomain in DNS Zone Editor (Benna)
 Create and Initialise Database for new user API
 Add new User to wadapi group
-Create Subdomain in DNS Zone Editor (Benna)
-Create myWadapi Project Directory
-Reassign user's home directory and copy .bashrc and .ssh files
-Point subdomain DocumentRoot to new home directory
+Create and Initialise myWadapi Project Directory
 Setup .htaccess and wadadli.php files in project home
+Reassign user's home directory
+Point subdomain DocumentRoot to new home directory
 Create 'api' folder in project root and upload files
-Register API with Chantico
-Update Settings with API ID
-Create Initial Managed User for API
+Create Root and Login APITokens
+Register API with Chantico and note API ID
+Setup API Sandbox Using Steps Above
