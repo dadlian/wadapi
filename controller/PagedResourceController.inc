@@ -8,11 +8,11 @@
 			//Verify validity of page and records values
 			$invalidArguments = $this->getInvalidQueryParameters();
 			
-			if(!intval($page)){
+			if(!(string)(int)$page == $page || intval($page) < 1){
 				$invalidArguments[] = "page";
 			}
 			
-			if(!intval($records)){
+			if(!(string)(int)$records == $records || intval($records) < 1){
 				$invalidArguments[] = "records";
 			}
 			
