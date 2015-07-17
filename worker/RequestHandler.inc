@@ -236,6 +236,7 @@
 			}
 		
 			//Set request body to raw input value
+			$headers = getallheaders();
 			$body = file_get_contents("php://input");
 			
 			ResponseHandler::changeContentType(self::$acceptables['Content-Type'][0]);
@@ -243,7 +244,7 @@
 			ResponseHandler::changeContentLanguage(self::$acceptables['Content-Language'][0]);
 			self::$request = new WadapiRequest($_SERVER['HTTP_HOST'],preg_replace("/\?".preg_replace("/\//","\/",preg_quote($_SERVER['QUERY_STRING']))."/","",$_SERVER['REQUEST_URI']),
 								$_SERVER['REQUEST_METHOD'],$arguments,getallheaders(),
-								self::$acceptables['Content-Type'][0],$body);
+								self::$acceptables['Content-Type'][0],intval($headers['Content-Length']),$body);
 		}
 		
 		private static function parseAcceptHeader($header,$setting,$type){
