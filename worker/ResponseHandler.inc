@@ -129,6 +129,7 @@
 				self::initialise();
 			}
 			
+			self::changeContentType("application/json");
 			self::$response->setStatusCode($status);
 			self::send(array("message"=>$messages));
 			exit;

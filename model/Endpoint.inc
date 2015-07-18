@@ -36,6 +36,24 @@
 		/** @Collection(type=@String) */
 		protected $requirements;
 		
+		/*
+		 * A list of MIME types which this endpoint can respond with (overides the global settings)
+		 */
+		/** @Collection(type=@String) */
+		protected $formats;
+		
+		/*
+		 * A list of character sets in which this endpoint can respond (overides the global settings)
+		 */
+		/** @Collection(type=@String) */
+		protected $charsets;
+		
+		/*
+		 * A list of languages in which this endpoint can respond (overides the global settings)
+		 */
+		/** @Collection(type=@String) */
+		protected $languages;
+		
 		public function getAllowedRoles(){
 			$allowedRoles = array();
 			foreach($this->getRoles() as $role){

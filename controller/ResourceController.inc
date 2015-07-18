@@ -40,7 +40,7 @@
 		private function ensureRequirements(){
 			$missingArguments = array();
 			foreach(RequestHandler::getEndpoint()->getRequirements() as $field){
-				if(!array_key_exists($field,RequestHandler::getContent())){
+				if(!array_key_exists($field,RequestHandler::getContent()?RequestHandler::getContent():array())){
 					$missingArguments[] = $field;
 				}
 			}

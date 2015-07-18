@@ -112,6 +112,14 @@
 			return self::$request->viewFromHeaders($header);
 		}
 		
+		public static function getAcceptable($header){
+			if(!self::$request){
+				self::initialise();
+			}
+			
+			return self::$acceptables[$header];
+		}
+		
 		public static function getArgument($key){
 			if(!self::$request){
 				self::initialise();
@@ -188,16 +196,33 @@
 				self::initialise();
 			}
 			
-			$acceptedTypes = array_keys(self::$acceptables["Content-Type"]);
-			if($acceptedTypes[0] == "application/json"){
+			$contentType = self::getHeader("Content-Type");
+			if($contentType == "application/json"){
 				$content = json_decode(self::$request->getBody(),true);
 				if(json_last_error() == JSON_ERROR_NONE){
 					return $content?$content:array();
 				}else{
-					ResponseHandler::bad("Request arguments most be supplied using valid JSON.");
+					ResponseHandler::bad("Request arguments must be supplied using valid JSON.");
+				}
+			}else if(preg_match("/^image\//",$contentType)){
+				
+				$image = @imagecreatefromstring(self::$request->getBody());
+				if($image){
+					$tmpFile = SettingsManager::getSetting("install","projectpath")."/temp-image-validate-".time();
+					fwrite(fopen($tmpFile,"w"),self::$request->getBody());
+					$mimeType = finfo_file(finfo_open(FILEINFO_MIME_TYPE),$tmpFile);
+					unlink($tmpFile);
+					
+					if($contentType == $mimeType){
+						return self::$request->getBody();
+					}else{
+						ResponseHandler::bad("Request body contains invalid data for Content-Type: $contentType.");
+					}
+				}else{
+					ResponseHandler::bad("Request body contains invalid data for Content-Type: $contentType.");
 				}
 			}else{
-				return array("content"=>self::$request->getBody());
+				return self::$request->getBody();
 			}
 		}
 		
@@ -248,7 +273,15 @@
 		}
 		
 		private static function parseAcceptHeader($header,$setting,$type){
-			$supportedValues = explode(",",SettingsManager::getSetting("api",$setting));
+			//Overide Global Acceptables Setting with Endpoint Settings if they exist			
+			$endpointsGateway = new EndpointsGateway();
+			$requestURI = substr(preg_replace("/\?".preg_replace("/\//","\/",preg_quote($_SERVER['QUERY_STRING']))."/","",$_SERVER['REQUEST_URI']),1);
+			$endpoint = $endpointsGateway->findUnique('path',$requestURI);
+			
+			$getter = "get".capitalise($setting);
+			$endpointAcceptables = $endpoint->$getter();
+			$supportedValues = array_values($endpointAcceptables?$endpointAcceptables:explode(",",SettingsManager::getSetting("api",$setting)));
+			
 			$defaultValue = $supportedValues?$supportedValues[0]:"";
 			$headers = getallheaders();
 			$acceptHeader = array_key_exists($header,$headers)?$headers[$header]:$defaultValue;
