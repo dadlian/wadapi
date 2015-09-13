@@ -278,6 +278,10 @@
 			$requestURI = substr(preg_replace("/\?".preg_replace("/\//","\/",preg_quote($_SERVER['QUERY_STRING']))."/","",$_SERVER['REQUEST_URI']),1);
 			$endpoint = $endpointsGateway->findUnique('path',$requestURI);
 			
+			if(!$endpoint){
+				ResponseHandler::missing("The requested endpoint /$requestURI does not exist on this server.");
+			}
+			
 			$getter = "get".capitalise($setting);
 			$endpointAcceptables = $endpoint->$getter();
 			$supportedValues = array_values($endpointAcceptables?$endpointAcceptables:explode(",",SettingsManager::getSetting("api",$setting)));

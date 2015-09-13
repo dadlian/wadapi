@@ -17,10 +17,13 @@
 		protected function reconcileSlug(){
 			$counter = 1;
 			$originalSlug = $this->getSlug();
-			while(DatabaseAdministrator::execute("SELECT * FROM ".get_class($this)." AS child JOIN SlugResource AS parent ON child.id = parent.id".
-								" WHERE child.id != ? AND parent.slug = ?",$this->getId(),$this->getSlug())){
-				$this->setSlug($originalSlug.$counter);
-				$counter++;
+			
+			if(DatabaseAdministrator::tableExists(get_class($this))){
+				while(DatabaseAdministrator::execute("SELECT * FROM ".get_class($this)." AS child JOIN SlugResource AS parent ON child.id = parent.id".
+									" WHERE child.id != ? AND parent.slug = ?",$this->getId(),$this->getSlug())){
+					$this->setSlug($originalSlug.$counter);
+					$counter++;
+				}
 			}
 		}
 	}
