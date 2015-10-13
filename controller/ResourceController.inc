@@ -33,14 +33,14 @@
 		}
 		
 		protected function getFromContent($argument,$default=""){
-			$arguments = RequestHandler::getContent();
+			$arguments = is_array(RequestHandler::getContent())?RequestHandler::getContent():array(RequestHandler::getContent());
 			return array_key_exists($argument,$arguments)?$arguments[$argument]:$default;
 		}
 		
 		private function ensureRequirements(){
 			$missingArguments = array();
 			foreach(RequestHandler::getEndpoint()->getRequirements() as $field){
-				if(!array_key_exists($field,RequestHandler::getContent()?RequestHandler::getContent():array())){
+				if(!array_key_exists($field,is_array(RequestHandler::getContent())?RequestHandler::getContent():array(RequestHandler::getContent()))){
 					$missingArguments[] = $field;
 				}
 			}
