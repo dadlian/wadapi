@@ -50,8 +50,13 @@
 			self::sendSuccess(200,$payload);
 		}
 		
-		protected static function modified($payload,$location){
+		protected static function modified($payload,$location,$lastModified="",$eTag=""){
 			self::$response->setContentURI($location);
+			
+			if($lastModified){
+				self::$response->setState($lastModified,$eTag);
+			}
+			
 			self::sendSuccess(200,$payload);
 		}
 		

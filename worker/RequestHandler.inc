@@ -197,7 +197,7 @@
 			}
 			
 			$contentType = self::getHeader("Content-Type");
-			if($contentType == "application/json"){
+			if(in_array("application/json",preg_split("/;/",$contentType))){
 				$content = json_decode(self::$request->getBody(),true);
 				if(json_last_error() == JSON_ERROR_NONE){
 					return $content?$content:array();

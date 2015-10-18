@@ -18,6 +18,7 @@
 				$controllerClass = RequestHandler::getEndpoint()->getController();
 				$controller = new $controllerClass(RequestHandler::getURIArguments());
 				$controller->options();
+				exit;
 			}
 			
 			//Ensure request is authenticated
