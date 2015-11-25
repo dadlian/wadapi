@@ -53,10 +53,18 @@
 			//Get total record count
 			$payload['total'] = $count;
 			
+			foreach($this->getCustomPayloadFields() as $customField => $customValue){
+				$payload[$customField] = $customValue;
+			}
+			
 			//Assemble Entries
 			$payload['entries'] = $this->buildPageEntries(($page-1)*$records,$records);
 			
 			ResponseHandler::retrieved($payload,$payload['self']);
+		}
+		
+		protected function getCustomPayloadFields(){
+			return array();
 		}
 		
 		abstract protected function getInvalidQueryParameters();
