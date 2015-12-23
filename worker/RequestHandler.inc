@@ -264,12 +264,13 @@
 			$headers = getallheaders();
 			$body = file_get_contents("php://input");
 			
+			$contentLength = array_key_exists("Content-Length",$headers)?intval($headers['Content-Length']):0;
 			ResponseHandler::changeContentType(self::$acceptables['Content-Type'][0]);
 			ResponseHandler::changeContentCharset(self::$acceptables['Content-Charset'][0]);
 			ResponseHandler::changeContentLanguage(self::$acceptables['Content-Language'][0]);
 			self::$request = new WadapiRequest($_SERVER['HTTP_HOST'],preg_replace("/\?".preg_replace("/\//","\/",preg_quote($_SERVER['QUERY_STRING']))."/","",$_SERVER['REQUEST_URI']),
 								$_SERVER['REQUEST_METHOD'],$arguments,getallheaders(),
-								self::$acceptables['Content-Type'][0],intval($headers['Content-Length']),$body);
+								self::$acceptables['Content-Type'][0],$contentLength,$body);
 		}
 		
 		private static function parseAcceptHeader($header,$setting,$type){
