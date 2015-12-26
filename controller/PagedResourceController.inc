@@ -26,7 +26,7 @@
 			$count = $this->getRecordCount();
 			
 			//Verify page exists
-			if(RequestHandler::getQueryParameter("page") && ($page-1)*$records >= $count){
+			if($count && RequestHandler::getQueryParameter("page") && ($page-1)*$records >= $count){
 				ResponseHandler::missing("The specified page does not exist for the given records per page.");
 			}
 			
