@@ -112,6 +112,14 @@
 			return self::$request->viewFromHeaders($header);
 		}
 		
+		public static function changeHeader($header,$newValue){
+			if(!self::$request){
+				self::initialise();
+			}
+			
+			return self::$request->insertToHeaders($header,$newValue);
+		}
+		
 		public static function getAcceptable($header){
 			if(!self::$request){
 				self::initialise();
