@@ -32,6 +32,10 @@
 			return ($_SERVER['HTTPS']?"https://":"http://").SettingsManager::getSetting("install","urlroot");
 		}
 		
+		protected function getRegexBase(){
+			return "/^https?:\/\/".preg_replace("/\//","\/",preg_quote(SettingsManager::getSetting("install","urlroot")));
+		}
+		
 		protected function getFromContent($argument,$default=""){
 			$arguments = is_array(RequestHandler::getContent())?RequestHandler::getContent():array(RequestHandler::getContent());
 			return array_key_exists($argument,$arguments)?$arguments[$argument]:$default;
