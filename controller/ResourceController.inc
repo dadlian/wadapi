@@ -29,7 +29,7 @@
 		}
 		
 		protected function getBase(){
-			return "http://".SettingsManager::getSetting("install","urlroot");
+			return ($_SERVER['HTTPS']?"https://":"http://").SettingsManager::getSetting("install","urlroot");
 		}
 		
 		protected function getFromContent($argument,$default=""){
@@ -82,7 +82,7 @@
 				}
 			}
 			
-			$uri = "http://".SettingsManager::getSetting("install","urlroot")."/".RequestHandler::getRequestURI();
+			$uri = ($_SERVER['HTTPS']?"https://":"http://").SettingsManager::getSetting("install","urlroot")."/".RequestHandler::getRequestURI();
 			ResponseHandler::retrieved($payload,$uri);
 		
 		}

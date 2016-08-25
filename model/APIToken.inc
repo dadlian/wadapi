@@ -29,11 +29,11 @@
 		}
 		
 		protected function getURI(){
-			return "http://".SettingsManager::getSetting("install","urlroot")."/access/{$this->getId()}";
+			return ($_SERVER['HTTPS']?"https://":"http://").SettingsManager::getSetting("install","urlroot")."/access/{$this->getId()}";
 		}
 		
 		protected function getURITemplate(){
-			return "http://".SettingsManager::getSetting("install","urlroot")."/access/{access_id}";
+			return ($_SERVER['HTTPS']?"https://":"http://").SettingsManager::getSetting("install","urlroot")."/access/{access_id}";
 		}
 		
 		protected function getETag(){
