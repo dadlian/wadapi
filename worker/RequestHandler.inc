@@ -23,8 +23,8 @@
 				}
 				
 				//Extract the desired endpoint based on the project URL Root
-				$regex = ($_SERVER['HTTPS']?"https:":"http:")."\/\/(www\.)?".preg_replace("/\//","\/",SettingsManager::getSetting("install","urlroot"));
-				$fullPath = urldecode(($_SERVER['HTTPS']?"https://":"http://").RequestHandler::getHost().self::$request->getEndpoint());
+				$regex = ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https:":"http:")."\/\/(www\.)?".preg_replace("/\//","\/",SettingsManager::getSetting("install","urlroot"));
+				$fullPath = urldecode(((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").RequestHandler::getHost().self::$request->getEndpoint());
 				$requestURI = implode("/",array_compress(preg_split("/\//", preg_replace("/$regex/","",$fullPath))));
 				self::$requestURI = implode("/",array_compress(preg_split("/\//",$requestURI)));
 			}

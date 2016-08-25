@@ -29,11 +29,11 @@
 		}
 		
 		protected function getURI(){
-			return ($_SERVER['HTTPS']?"https://":"http://").SettingsManager::getSetting("install","urlroot")."/access/{$this->getId()}";
+			return ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").SettingsManager::getSetting("install","urlroot")."/access/{$this->getId()}";
 		}
 		
 		protected function getURITemplate(){
-			return ($_SERVER['HTTPS']?"https://":"http://").SettingsManager::getSetting("install","urlroot")."/access/{access_id}";
+			return ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").SettingsManager::getSetting("install","urlroot")."/access/{access_id}";
 		}
 		
 		protected function getETag(){

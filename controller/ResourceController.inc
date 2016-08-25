@@ -29,7 +29,7 @@
 		}
 		
 		protected function getBase(){
-			return ($_SERVER['HTTPS']?"https://":"http://").SettingsManager::getSetting("install","urlroot");
+			return ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").SettingsManager::getSetting("install","urlroot");
 		}
 		
 		protected function getRegexBase(){
@@ -86,7 +86,7 @@
 				}
 			}
 			
-			$uri = ($_SERVER['HTTPS']?"https://":"http://").SettingsManager::getSetting("install","urlroot")."/".RequestHandler::getRequestURI();
+			$uri = ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").SettingsManager::getSetting("install","urlroot")."/".RequestHandler::getRequestURI();
 			ResponseHandler::retrieved($payload,$uri);
 		
 		}
