@@ -240,7 +240,7 @@
 			if($_SERVER['QUERY_STRING']){
 				foreach(preg_split("/\&/",urldecode($_SERVER['QUERY_STRING'])) as $queryPart){
 					$argumentParts = preg_split("/=/",$queryPart);
-					$arguments[$argumentParts[0]] = $argumentParts[1];
+					$arguments[$argumentParts[0]] = (sizeof($argumentParts)>1)?$argumentParts[1]:"";
 				}
 			}
 			
