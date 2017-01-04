@@ -1,10 +1,10 @@
 .bash*
-.cpanel*
-.trash
+.cache*
 .ssh
-.ht*
-.zshrc
+.git
 .viminfo
-.lastlogin
-.dns
-.contactemail
+bin
+conf
+deploy.sh
+exclude.txt
+wadapi_setup.txt

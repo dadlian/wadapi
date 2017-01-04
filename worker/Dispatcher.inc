@@ -1,5 +1,5 @@
 <?php
-	class WadapiDispatcher extends Worker{
+	class Dispatcher extends Worker{
 		protected static function dispatchRequest(){
 			$sqlGateway = new SQLGateway();
 			$searcher = new Searcher();

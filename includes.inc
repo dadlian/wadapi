@@ -1,0 +1,82 @@
+<?php
+	require_once(dirname(__FILE__)."/toolbox/files.php");	
+	
+	//Include Third-Parth Libraries
+	require_once(dirname(__FILE__)."/third_party/addendum/annotations.php");
+	
+	//Include Wadadli Libraries
+	require_once(dirname(__FILE__)."/toolbox/arrays.php");
+	require_once(dirname(__FILE__)."/toolbox/files.php");
+	require_once(dirname(__FILE__)."/toolbox/log.php");
+	require_once(dirname(__FILE__)."/toolbox/messages.php");
+	require_once(dirname(__FILE__)."/toolbox/methods.php");
+	require_once(dirname(__FILE__)."/toolbox/strings.php");
+	require_once(dirname(__FILE__)."/toolbox/test.php");
+	require_once(dirname(__FILE__)."/toolbox/wadadli_annotations.php");
+	
+	require_once(dirname(__FILE__)."/model/reflection/WadadliReflectionClass.inc");
+	require_once(dirname(__FILE__)."/model/reflection/WadadliReflectionProperty.inc");
+	require_once(dirname(__FILE__)."/model/reflection/WadadliReflectionAnnotation.inc");
+	require_once(dirname(__FILE__)."/model/reflection/Mirror.inc");
+	
+	require_once(dirname(__FILE__)."/worker/Worker.inc");
+	require_once(dirname(__FILE__)."/worker/CryptKeeper.inc");
+	require_once(dirname(__FILE__)."/worker/DatabaseAdministrator.inc");
+	require_once(dirname(__FILE__)."/worker/Dispatcher.inc");
+	require_once(dirname(__FILE__)."/worker/Janitor.inc");
+	require_once(dirname(__FILE__)."/worker/Magistrate.inc");
+	require_once(dirname(__FILE__)."/worker/Postman.inc");
+	require_once(dirname(__FILE__)."/worker/QuarterMaster.inc");
+	require_once(dirname(__FILE__)."/worker/Registrar.inc");
+	require_once(dirname(__FILE__)."/worker/RequestHandler.inc");
+	require_once(dirname(__FILE__)."/worker/ResponseHandler.inc");
+	require_once(dirname(__FILE__)."/worker/SettingsManager.inc");
+	
+	require_once(dirname(__FILE__)."/model/WadadliClass.inc");
+	require_once(dirname(__FILE__)."/model/PersistentClass.inc");
+	
+	require_once(dirname(__FILE__)."/model/api/Resource.inc");
+	require_once(dirname(__FILE__)."/model/api/SlugResource.inc");
+	require_once(dirname(__FILE__)."/model/api/APIToken.inc");
+	
+	require_once(dirname(__FILE__)."/controller/Controller.inc");
+	require_once(dirname(__FILE__)."/controller/ResourceController.inc");
+	require_once(dirname(__FILE__)."/controller/PagedResourceController.inc");
+	require_once(dirname(__FILE__)."/controller/APIError.inc");
+	require_once(dirname(__FILE__)."/controller/CreateTest.inc");
+	
+	require_once(dirname(__FILE__)."/model/database/DatabaseConnection.inc");
+	require_once(dirname(__FILE__)."/model/database/MySQLConnection.inc");
+	require_once(dirname(__FILE__)."/model/database/SQLString.inc");
+	
+	require_once(dirname(__FILE__)."/model/gateway/Gateway.inc");
+	require_once(dirname(__FILE__)."/model/gateway/XMLGateway.inc");
+	require_once(dirname(__FILE__)."/model/gateway/SQLGateway.inc");
+	require_once(dirname(__FILE__)."/model/gateway/EndpointsGateway.inc");
+	require_once(dirname(__FILE__)."/model/gateway/SettingsGateway.inc");
+	require_once(dirname(__FILE__)."/model/gateway/Criterion.inc");
+	require_once(dirname(__FILE__)."/model/gateway/Searcher.inc");
+	require_once(dirname(__FILE__)."/model/gateway/Sorter.inc");
+	
+	require_once(dirname(__FILE__)."/model/http/WadapiRequest.inc");
+	require_once(dirname(__FILE__)."/model/http/WadapiResponse.inc");
+	
+	require_once(dirname(__FILE__)."/model/system/Endpoint.inc");
+	require_once(dirname(__FILE__)."/model/system/Grave.inc");
+	require_once(dirname(__FILE__)."/model/system/Role.inc");
+	require_once(dirname(__FILE__)."/model/system/Settings.inc");
+	require_once(dirname(__FILE__)."/model/system/URLPattern.inc");
+	require_once(dirname(__FILE__)."/model/system/WadadliDate.inc");
+	require_once(dirname(__FILE__)."/model/system/WadadliMessage.inc");
+	require_once(dirname(__FILE__)."/model/system/Warrant.inc");
+	
+	//Initialise Custom Settings Files
+	if(isset($settings)){
+		SettingsManager::changeSource($settings);
+	}
+	
+	//Include Wadadli Project Files
+	require_all(SettingsManager::getSetting("install","projectPath")."/controller");
+	require_all(SettingsManager::getSetting("install","projectPath")."/model");
+	require_all(SettingsManager::getSetting("install","projectPath")."/view");
+?>

@@ -1,5 +1,5 @@
 <?php
-	class WadapiRole extends PersistentClass{
+	class Role extends PersistentClass{
 		/** @Collection(type=@String) */
 		protected $permissions;
 	}

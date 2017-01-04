@@ -21,7 +21,7 @@
 		/*
 		 * A list of user types that have permission to execute this endpoint
 		 */
-		/** @Collection(type=@Object(class='WadapiRole')) */
+		/** @Collection(type=@Object(class='Role')) */
 		protected $roles;
 		
 		/*
