@@ -12,6 +12,7 @@
 	require_once(dirname(__FILE__)."/toolbox/methods.php");
 	require_once(dirname(__FILE__)."/toolbox/strings.php");
 	require_once(dirname(__FILE__)."/toolbox/test.php");
+	require_once(dirname(__FILE__)."/toolbox/Timer.inc");
 	require_once(dirname(__FILE__)."/toolbox/wadadli_annotations.php");
 	
 	require_once(dirname(__FILE__)."/model/reflection/WadadliReflectionClass.inc");
