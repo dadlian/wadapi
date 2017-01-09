@@ -1,9 +1,6 @@
 <?php
 	class Janitor extends Worker{		
 		protected static function cleanup($success=true){
-			//Save undelivered messages
-			Postman::saveMessages();
-			
 			//Clear Object Cache
 			QuarterMaster::decommission();
 			

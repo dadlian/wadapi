@@ -111,41 +111,5 @@
 				return new WadadliMessage(session_id(),$messageType, "", "", "");
 			}
 		}
-		
-		/*
-		 * Saves a copy of all Undelivered Messages to the DB for future use
-		 */
-		protected static function saveMessages(){
-			if(!self::$gateway){
-				self::$gateway = new SQLGateway();
-			}
-			
-			foreach(self::$postOffice as $recipient => $mailbox){
-				foreach($mailbox as $id => $message){
-					if($message->getText()){
-						self::$gateway->save($message);
-					}
-				}
-			}
-		}
-		
-		/*
-		 * Loads all saved messages for the current session into memory and deletes them from the database
-		 */
-		protected static function loadMessages(){
-			$searcher = new Searcher();
-			$sqlGateway = new SQLGateway();
-			$searcher->addCriterion("session",Criterion::EQUAL,session_id());
-			$messages = $sqlGateway->find("WadadliMessage",$searcher);
-			
-			foreach($messages as $message){
-				if(!array_key_exists($message->getRecipient(), self::$postOffice)){
-					self::$postOffice[$message->getRecipient()] = array();
-				}
-				
-				self::$postOffice[$message->getRecipient()][$message->getId()] = $message;
-				$sqlGateway->delete($message);
-			}
-		}
 	}
 ?>
