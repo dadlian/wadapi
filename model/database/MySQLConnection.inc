@@ -64,6 +64,7 @@
 				return;
 			}
 			
+			$queryStartTime = microtime(true);
 			$arguments = func_get_args();
 			$statement = $arguments[0];
 			
@@ -138,6 +139,10 @@
 			}
 			
 			$preparedStatement->close();
+			
+			//Log Query Performance
+			$this->logQuery($statement,microtime(true)-$queryStartTime);
+			
 			return $resultSet;
 		}
 		
@@ -175,6 +180,19 @@
 		 */
 		public function isClosed(){
 			return is_null($this->connection);
+		}
+		
+		/*
+		 * Keeps a record of queries run and their average execution time
+		 */
+		private function logQuery($query,$runtime){
+			$logConnection = new mysqli($this->getHostname(), $this->getUsername(), $this->getPassword(), $this->getDatabase());
+			$prefix = SettingsManager::getSetting("database","tableprefix");
+			$query = "INSERT INTO {$prefix}_QueryLog VALUES('$query',1,$runtime) ON DUPLICATE KEY UPDATE executions = executions+1, runtime = ((runtime*executions)+$runtime)/(executions+1)";
+			
+			$logConnection->query($query);
+			$logConnection->commit();
+			$logConnection->close();
 		}
 	}
 ?>
