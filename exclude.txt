@@ -3,8 +3,10 @@
 .ssh
 .git
 .viminfo
+.well-known
 bin
 conf
 deploy.sh
 exclude.txt
 wadapi_setup.txt
+profiler/doc

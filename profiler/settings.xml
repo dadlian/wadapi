@@ -11,18 +11,18 @@
 			<name>database</name>
 			<values>
 				<hostname>localhost</hostname>
-				<database>wadapi_sandbox</database>
-				<username>wadapi_sandbox</username>
-				<password>e=e%WGbqFkS3</password>
-				<tableprefix>chantico</tableprefix>
+				<database>wadapi_main</database>
+				<username>wadapi_main</username>
+				<password>2#wGgy6)*3%</password>
+				<tableprefix>profiler</tableprefix>
 				<hitsforindex>100</hitsforindex>
 			</values>
 		</settings>
 		<settings>
 			<name>install</name>	
 			<values>
-				<projectpath>/home/wadapi/sandbox/login/api/</projectpath>
-				<urlroot>login.sandbox.mywadapi.com</urlroot>
+				<projectpath>/home/wadapi/framework/core/profiler/</projectpath>
+				<urlroot>profiler.mywadapi.com</urlroot>
 				<dispatcher>Dispatcher</dispatcher>
 			</values>
 		</settings>
@@ -39,21 +39,6 @@
 				<formats>application/json</formats>
 				<languages>en,en-au,en-bz,en-ca,en-ie,en-jm,en-nz,en-ph,en-za,en-tt,en-gb,en-us,en-zw</languages>
 				<charsets>utf-8</charsets>
-			</values>
-		</settings>
-		<settings>
-			<name>options</name>
-			<values>
-				<lifetime>0</lifetime>
-				<salt>T5WshJwpA5Ee97udYrpgv9</salt>
-			</values>
-		</settings>
-		<settings>
-			<name>chantico</name>
-			<values>
-				<root>https://login.sandbox.mywadapi.com</root>
-				<key>d3b96c7c137b4f017234abdacf631f8c</key>
-				<secret>4af33e5889b1e96ee6b9d2b602a0a1f0</secret>
 			</values>
 		</settings>
 	</settingslist>

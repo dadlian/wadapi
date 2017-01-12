@@ -1,5 +1,83 @@
 <?xml version="1.0"?>
 <mapping>
 	<endpointlist>
+		<endpoint>
+			<name>Access Collection</name>
+			<path>access</path>
+			<controller>AccessCollection</controller>
+			<roles>
+				<login>
+					<permissions>
+						<permission1>write</permission1>
+					</permissions>
+				</login>
+			</roles>
+			<parameters>
+			</parameters>
+			<requirements>
+				<req1>role</req1>
+			</requirements>
+		</endpoint>
+		<endpoint>
+			<name>Access Resource</name>
+			<path>access/@</path>
+			<controller>AccessResource</controller>
+			<roles>
+				<login>
+					<permissions>
+						<permission1>read</permission1>
+						<permission2>write</permission2>
+					</permissions>
+				</login>
+			</roles>
+			<parameters>
+				<param1>access</param1>
+			</parameters>
+			<requirements>
+				<req1>role</req1>
+			</requirements>
+		</endpoint>
+		<endpoint>
+			<name>Token Collection</name>
+			<path>access/@/tokens</path>
+			<controller>TokenCollection</controller>
+			<roles>
+			</roles>
+			<parameters>
+				<param1>access</param1>
+			</parameters>
+			<requirements>
+			</requirements>
+		</endpoint>
+		<endpoint>
+			<name>Token Resource</name>
+			<path>access/@/tokens/active</path>
+			<controller>TokenResource</controller>
+			<roles>
+				<login>
+					<permissions>
+						<permission1>read</permission1>
+						<permission2>write</permission2>
+					</permissions>
+				</login>
+				<master>
+					<permissions>
+						<permission1>read</permission1>
+						<permission2>write</permission2>
+					</permissions>
+				</master>
+				<consumer>
+					<permissions>
+						<permission1>read</permission1>
+						<permission2>write</permission2>
+					</permissions>
+				</consumer>
+			</roles>
+			<parameters>
+				<param1>access</param1>
+			</parameters>
+			<requirements>
+			</requirements>
+		</endpoint>
 	</endpointlist>
 </mapping>

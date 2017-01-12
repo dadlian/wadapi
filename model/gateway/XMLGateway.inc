@@ -13,7 +13,6 @@
 			global $settings;
 			$settingsFile = simplexml_load_file($settings?$settings:dirname(__FILE__)."/../../../conf/settings.xml");
 			$projectPath = $settingsFile->settingslist->settings[2]->values->projectpath;
-			
 			parent::__construct(preg_replace("/".preg_replace("/\//","\/",$projectPath)."/","",$initialDatasource));
 			$this->setXmlRoot($projectPath.$this->getDatasource());
 		}
