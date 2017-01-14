@@ -4,6 +4,7 @@
 .git
 .viminfo
 .well-known
+.mysql_history
 bin
 conf
 deploy.sh
