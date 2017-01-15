@@ -23,7 +23,9 @@
 		}
 		
 		protected function getRecordCount(){
-			$countResult = DatabaseAdministrator::execute("SELECT COUNT(id) as endpoints FROM EndpointStatistic");
+			$api = $this->getResourceObject("API","id",$this->viewFromArguments("api"));
+			
+			$countResult = DatabaseAdministrator::execute("SELECT COUNT(DISTINCT(endpoint)) as endpoints FROM EndpointStatistic WHERE api = ?",$api->getId());
 			$count = $countResult[0]["endpoints"];
 			
 			return $count;
@@ -64,8 +66,8 @@
 			$payload = array(
 				"self"=>$endpointStatistic->getURI(),
 				"uri"=>$endpointStatistic->getEndpoint(),
-				"average-runtime"=>$endpointStatistic->getRuntime(),
-				"daily-requests"=>$endpointStatistic->getRequests(),
+				"average-runtime"=>floatval(sprintf("%.4f",$endpointStatistic->getRuntime())),
+				"daily-requests"=>floatval(sprintf("%.2f",$endpointStatistic->getRequests())),
 				"runtimes"=>"{$endpointStatistic->getURI()}/runtimes",
 				"requests"=>"{$endpointStatistic->getURI()}/requests",
 				"objects"=>"{$endpointStatistic->getURI()}/objects",

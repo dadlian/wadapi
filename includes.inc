@@ -1,4 +1,6 @@
 <?php
+	$GLOBALS['scriptStartTime'] = microtime(true);
+	
 	//Initialise getallheaders() for NGinx
 	if (!function_exists('getallheaders')) {
 		function getallheaders() {
@@ -37,6 +39,7 @@
 	require_once(dirname(__FILE__)."/worker/Worker.inc");
 	require_once(dirname(__FILE__)."/worker/CryptKeeper.inc");
 	require_once(dirname(__FILE__)."/worker/DatabaseAdministrator.inc");
+	require_once(dirname(__FILE__)."/worker/Detective.inc");
 	require_once(dirname(__FILE__)."/worker/Dispatcher.inc");
 	require_once(dirname(__FILE__)."/worker/Janitor.inc");
 	require_once(dirname(__FILE__)."/worker/Magistrate.inc");

@@ -216,5 +216,99 @@
 			<requirements>
 			</requirements>
 		</endpoint>
+		<endpoint>
+			<name>Object Collection</name>
+			<path>apis/@/endpoints/@/objects</path>
+			<controller>ObjectCollection</controller>
+			<roles>
+				<master>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</master>
+				<consumer>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</consumer>
+			</roles>
+			<parameters>
+				<param1>api</param1>
+				<param2>endpoint</param2>
+			</parameters>
+			<requirements>
+			</requirements>
+		</endpoint>
+		<endpoint>
+			<name>Object Resource</name>
+			<path>apis/@/endpoints/@/objects/@</path>
+			<controller>ObjectResource</controller>
+			<roles>
+				<master>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</master>
+				<consumer>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</consumer>
+			</roles>
+			<parameters>
+				<param1>api</param1>
+				<param2>endpoint</param2>
+				<param3>object</param3>
+			</parameters>
+			<requirements>
+			</requirements>
+		</endpoint>
+		<endpoint>
+			<name>Query Collection</name>
+			<path>apis/@/endpoints/@/queries</path>
+			<controller>QueryCollection</controller>
+			<roles>
+				<master>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</master>
+				<consumer>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</consumer>
+			</roles>
+			<parameters>
+				<param1>api</param1>
+				<param2>endpoint</param2>
+			</parameters>
+			<requirements>
+			</requirements>
+		</endpoint>
+		<endpoint>
+			<name>Query Resource</name>
+			<path>apis/@/endpoints/@/queries/@</path>
+			<controller>QueryResource</controller>
+			<roles>
+				<master>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</master>
+				<consumer>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</consumer>
+			</roles>
+			<parameters>
+				<param1>api</param1>
+				<param2>endpoint</param2>
+				<param3>query</param3>
+			</parameters>
+			<requirements>
+			</requirements>
+		</endpoint>
 	</endpointlist>
 </mapping>

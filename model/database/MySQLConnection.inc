@@ -64,9 +64,9 @@
 				return;
 			}
 			
-			$queryStartTime = microtime(true);
 			$arguments = func_get_args();
 			$statement = $arguments[0];
+			Detective::investigate($statement);
 			
 			$expectedParameters = substr_count($statement, "?");
 			$parameters = array_slice($arguments, 1, $expectedParameters);
@@ -107,6 +107,8 @@
 			}
 			
 			if(@!$preparedStatement->execute()){
+				//var_dump($bindString);
+				//var_dump($parameters); exit;
 				fatal_error(DATABASE_EXECUTE_ERROR, $preparedStatement->error.".");
 				return;
 			}
@@ -117,6 +119,7 @@
 			
 			//If a non query statement was executed the metadata should be null and we return true for success.
 			if(!$preparedStatement->result_metadata()){
+				Detective::closeCase($statement);
 				return $resultSet;
 			}
 			
@@ -140,9 +143,7 @@
 			
 			$preparedStatement->close();
 			
-			//Log Query Performance
-			$this->logQuery($statement,microtime(true)-$queryStartTime);
-			
+			Detective::closeCase($statement);
 			return $resultSet;
 		}
 		
@@ -180,19 +181,6 @@
 		 */
 		public function isClosed(){
 			return is_null($this->connection);
-		}
-		
-		/*
-		 * Keeps a record of queries run and their average execution time
-		 */
-		private function logQuery($query,$runtime){
-			$logConnection = new mysqli($this->getHostname(), $this->getUsername(), $this->getPassword(), $this->getDatabase());
-			$prefix = SettingsManager::getSetting("database","tableprefix");
-			$query = "INSERT INTO {$prefix}_QueryLog VALUES('$query',1,$runtime) ON DUPLICATE KEY UPDATE executions = executions+1, runtime = ((runtime*executions)+$runtime)/(executions+1)";
-			
-			$logConnection->query($query);
-			$logConnection->commit();
-			$logConnection->close();
 		}
 	}
 ?>

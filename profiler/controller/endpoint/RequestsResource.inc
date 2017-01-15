@@ -1,5 +1,5 @@
 <?php
-	class RuntimesResource extends ResourceController{
+	class RequestsResource extends ResourceController{
 		protected function isInvalid(){
 			$invalidArguments = array();
 			return $invalidArguments;
@@ -29,7 +29,7 @@
 		
 		protected function isConsistent($modifiedDate,$eTag){
 			$endpoint = $this->getResourceObject("Endpoint","id",$this->viewFromArguments("endpoint"));			
-			return $modifiedDate == $endpoint->getModified() && $eTag == md5($endpoint->getETag());
+			return $modifiedDate == $endpoint->getModified() && $eTag == $endpoint->getETag();
 		}
 		
 		protected function assemblePayload($endpointStatistics){
@@ -73,7 +73,7 @@
 			$sorter->addCriterion("date",$order);
 			
 			$payload = $this->assemblePayload($sqlGateway->find("EndpointStatistic",$searcher,$sorter));
-			ResponseHandler::retrieved($payload,$endpoint->getURI(),$endpoint->getModified(),md5($endpoint->getETag()));
+			ResponseHandler::retrieved($payload,$endpoint->getURI(),$endpoint->getModified(),$endpoint->getETag());
 		}
 	}
 ?>

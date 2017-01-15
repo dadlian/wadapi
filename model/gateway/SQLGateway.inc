@@ -1160,8 +1160,11 @@
 		 * Given raw data construct PersistentClass object
 		 */
 		 private function loadObject($class, $data){
+			Detective::investigate($class->getName());
+			
 			if(array_key_exists('id', $data) && QuarterMaster::release($data['id']) && 
 				get_class(QuarterMaster::release($data['id'])) == $class->getName()){
+					Detective::closeCase($class->getName());
 					return QuarterMaster::release($data['id']);
 			}
 			
@@ -1235,6 +1238,7 @@
 			//Cache object before returning it
 			QuarterMaster::store($object);
 			
+			Detective::closeCase($class->getName());
 			return $object;
 		 }
 		 

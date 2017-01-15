@@ -5,18 +5,18 @@
 			$endpoint = $this->getResourceObject("EndpointStatistic","id",$this->viewFromArguments("endpoint"));
 			
 			$endpointResults = DatabaseAdministrator::execute("SELECT AVG(runtime)/AVG(requests) as averageRuntime, AVG(requests) AS dailyRequests ".
-								"FROM EndpointStatistic WHERE api = ? AND endpoint = '?'",$api->getId(),$endpoint);
-								
-			$endpointStatistic = new EndpointStatistic($api,$endpoint->getEndpoint(),"",$endpointResults['averageRuntime'],$endpointResults['dailyRequests']);
+								"FROM EndpointStatistic WHERE api = {$api->getId()} AND endpoint = '{$endpoint->getEndpoint()}'");
+			
+			$endpointStatistic = new EndpointStatistic($api,$endpoint->getEndpoint(),"",$endpointResults[0]['averageRuntime'],$endpointResults[0]['dailyRequests']);
 			$endpointStatistic->setId($endpoint->getId());
 			
-			$payload = $this->assemblePayload($endpoint);
-			ResponseHandler::retrieved($payload,$endpoint->getURI(),$endpoint->getModified(),md5($endpoint->getETag()));
+			$payload = $this->assemblePayload($endpointStatistic);
+			ResponseHandler::retrieved($payload,$endpoint->getURI(),$endpoint->getModified(),$endpoint->getETag());
 		}
 		
 		protected function isConsistent($modifiedDate,$eTag){
 			$endpointStatistic = $this->getResourceObject("EndpointStatistic","id",$this->viewFromArguments("endpoint"));			
-			return $modifiedDate == $endpointStatistic->getModified() && $eTag == md5($endpointStatistic->getETag());
+			return $modifiedDate == $endpointStatistic->getModified() && $eTag == $endpointStatistic->getETag();
 		}
 	}
 ?>

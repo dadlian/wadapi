@@ -12,11 +12,11 @@
 		/** @Float */
 		protected $runtime;
 		
-		/** @Integer */
+		/** @Float */
 		protected $requests;
 		
 		protected function getURI(){
-			return $this->getBaseUri()."/apis/{$this->getAPI()->getId()}/endpoints/{$this->getId()}";
+			return $this->getBaseUri()."/apis/{$this->getApi()->getId()}/endpoints/{$this->getId()}";
 		}
 		
 		protected function getURITemplate(){
@@ -24,7 +24,7 @@
 		}
 		
 		protected function getETag(){
-			$eTag = $this->getAPI()->getETag();
+			$eTag = $this->getApi()->getETag();
 			$eTag .= $this->getEndpoint();
 			$eTag .= $this->getDate();
 			$eTag .= $this->getRequests();

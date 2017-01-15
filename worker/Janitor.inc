@@ -23,6 +23,9 @@
 				$connection->close();
 				Registrar::unregister($connection);
 			}
+			
+			//Report Profiling Data
+			Detective::report();
 		}
 	}
 ?>

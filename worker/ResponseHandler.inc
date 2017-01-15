@@ -69,9 +69,9 @@
 				self::initialise();
 			}
 			
+			Janitor::cleanup(true);
 			self::$response->setStatusCode($status);
 			self::send($payload);
-			Janitor::cleanup(true);
 		}
 		
 		/*------------------------------- ERROR FUNCTIONs -------------------------------*/

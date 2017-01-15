@@ -29,13 +29,13 @@
 		
 		protected function isConsistent($modifiedDate,$eTag){
 			$endpoint = $this->getResourceObject("Endpoint","id",$this->viewFromArguments("endpoint"));			
-			return $modifiedDate == $endpoint->getModified() && $eTag == md5($endpoint->getETag());
+			return $modifiedDate == $endpoint->getModified() && $eTag == $endpoint->getETag();
 		}
 		
 		protected function assemblePayload($endpointStatistics){
 			$endpointPayload = array();
 			foreach($endpointStatistics as $endpointStatistic){
-				$endpointPayload[$endpointStatistic->getDate()] = round($endpointStatistic->getRuntime()/$endpointStatistic->getRequests(),3);
+				$endpointPayload[$endpointStatistic->getDate()] = round($endpointStatistic->getRuntime()/$endpointStatistic->getRequests(),4);
 			}
 			
 			$payload = array(
@@ -73,7 +73,7 @@
 			$sorter->addCriterion("date",$order);
 			
 			$payload = $this->assemblePayload($sqlGateway->find("EndpointStatistic",$searcher,$sorter));
-			ResponseHandler::retrieved($payload,$endpoint->getURI(),$endpoint->getModified(),md5($endpoint->getETag()));
+			ResponseHandler::retrieved($payload,$endpoint->getURI(),$endpoint->getModified(),$endpoint->getETag());
 		}
 	}
 ?>
