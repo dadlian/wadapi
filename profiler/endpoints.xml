@@ -310,5 +310,99 @@
 			<requirements>
 			</requirements>
 		</endpoint>
+		<endpoint>
+			<name>Call Collection</name>
+			<path>apis/@/endpoints/@/calls</path>
+			<controller>CallCollection</controller>
+			<roles>
+				<master>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</master>
+				<consumer>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</consumer>
+			</roles>
+			<parameters>
+				<param1>api</param1>
+				<param2>endpoint</param2>
+			</parameters>
+			<requirements>
+			</requirements>
+		</endpoint>
+		<endpoint>
+			<name>Call Resource</name>
+			<path>apis/@/endpoints/@/calls/@</path>
+			<controller>CallResource</controller>
+			<roles>
+				<master>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</master>
+				<consumer>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</consumer>
+			</roles>
+			<parameters>
+				<param1>api</param1>
+				<param2>endpoint</param2>
+				<param3>call</param3>
+			</parameters>
+			<requirements>
+			</requirements>
+		</endpoint>
+		<endpoint>
+			<name>Custom Collection</name>
+			<path>apis/@/endpoints/@/custom</path>
+			<controller>CustomCollection</controller>
+			<roles>
+				<master>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</master>
+				<consumer>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</consumer>
+			</roles>
+			<parameters>
+				<param1>api</param1>
+				<param2>endpoint</param2>
+			</parameters>
+			<requirements>
+			</requirements>
+		</endpoint>
+		<endpoint>
+			<name>Custom Resource</name>
+			<path>apis/@/endpoints/@/custom/@</path>
+			<controller>CustomResource</controller>
+			<roles>
+				<master>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</master>
+				<consumer>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</consumer>
+			</roles>
+			<parameters>
+				<param1>api</param1>
+				<param2>endpoint</param2>
+				<param3>custom</param3>
+			</parameters>
+			<requirements>
+			</requirements>
+		</endpoint>
 	</endpointlist>
 </mapping>

@@ -1,5 +1,5 @@
 <?php
-	class ObjectStatistic extends PersistentClass{
+	class CustomStatistic extends PersistentClass{
 		/** @Object(class='API') */
 		protected $api;
 		
@@ -7,13 +7,13 @@
 		protected $endpoint;
 		
 		/** @String */
-		protected $class;
+		protected $customKey;
 		
 		/** @Integer */
-		protected $instances;
+		protected $runs;
 		
 		/** @Float */
-		protected $loadTime;
+		protected $duration;
 		
 		/** @Integer */
 		protected $requests;
@@ -26,19 +26,19 @@
 			$endpointResults = DatabaseAdministrator::execute("SELECT id FROM EndpointStatistic WHERE api = '{$this->getApi()->getId()}' AND endpoint = '{$this->getEndpoint()}'");
 			$endpointId = $endpointResults?$endpointResults[0]["id"]:0;
 			
-			return $this->getBaseUri()."/apis/{$this->getApi()->getId()}/endpoints/$endpointId/objects/{$this->getId()}";
+			return $this->getBaseUri()."/apis/{$this->getApi()->getId()}/endpoints/$endpointId/custom/{$this->getId()}";
 		}
 		
 		protected function getURITemplate(){
-			return $this->getBaseUri()."/apis/{api_id}/endpoints/{endpoint_id}/objects/{object_id}";
+			return $this->getBaseUri()."/apis/{api_id}/endpoints/{endpoint_id}/custom/{custom_id}";
 		}
 		
 		protected function getETag(){
 			$eTag = $this->getApi()->getETag();
 			$eTag .= $this->getEndpoint();
-			$eTag .= $this->getClass();
-			$eTag .= $this->getInstances();
-			$eTag .= $this->getLoadTime();
+			$eTag .= $this->getCustomKey();
+			$eTag .= $this->getRuns();
+			$eTag .= $this->getDuration();
 			$eTag .= $this->getRequests();
 			
 			return md5($this->getModified().$eTag);

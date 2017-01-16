@@ -66,7 +66,7 @@
 			
 			$arguments = func_get_args();
 			$statement = $arguments[0];
-			Detective::investigate($statement);
+			Detective::investigate($statement,false);
 			
 			$expectedParameters = substr_count($statement, "?");
 			$parameters = array_slice($arguments, 1, $expectedParameters);
@@ -77,7 +77,7 @@
 				if(!is_null($parameters[$i]) && !is_scalar($parameters[$i])){
 					fatal_error(DATABASE_EXECUTE_ERROR, "Query parameter of type ".gettype($parameters[$i])." was passed to".
 										" MySQLConnection::execute(). Primitive type expected.");
-					return;					
+					return;
 				}				
 				
 				$parameterReferences[] = &$parameters[$i];
@@ -119,7 +119,7 @@
 			
 			//If a non query statement was executed the metadata should be null and we return true for success.
 			if(!$preparedStatement->result_metadata()){
-				Detective::closeCase($statement);
+				Detective::closeCase($statement,false);
 				return $resultSet;
 			}
 			
@@ -143,7 +143,7 @@
 			
 			$preparedStatement->close();
 			
-			Detective::closeCase($statement);
+			Detective::closeCase($statement,false);
 			return $resultSet;
 		}
 		

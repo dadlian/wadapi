@@ -73,8 +73,8 @@
 			$payload = array(
 				"self"=>$objectStatistic->getURI(),
 				"class"=>$objectStatistic->getClass(),
-				"request-instances"=>$objectStatistic->getInstances(),
-				"instance-load"=>floatval(sprintf("%.4f",$objectStatistic->getLoadTime()/$objectStatistic->getInstances()))
+				"request-instances"=>sprintf("%.2f",$objectStatistic->getInstances()/$objectStatistic->getRequests()),
+				"instance-loadtime"=>sprintf("%.4f",$objectStatistic->getLoadTime()/$objectStatistic->getInstances())
 			);
 			
 			return $payload;

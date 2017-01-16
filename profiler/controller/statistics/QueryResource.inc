@@ -1,14 +1,14 @@
 <?php
 	class ObjectResource extends ObjectController{
 		protected function get(){
-			$objectStatistic = $this->getResourceObject("ObjectStatistic","id",$this->viewFromArguments("object"));	
-			$payload = $this->assemblePayload($objectStatistic);
-			ResponseHandler::retrieved($payload,$objectStatistic->getURI(),$objectStatistic->getModified(),$objectStatistic->getETag());
+			$queryStatistic = $this->getResourceObject("QueryStatistic","id",$this->viewFromArguments("query"));	
+			$payload = $this->assemblePayload($queryStatistic);
+			ResponseHandler::retrieved($payload,$queryStatistic->getURI(),$queryStatistic->getModified(),$queryStatistic->getETag());
 		}
 		
 		protected function isConsistent($modifiedDate,$eTag){
-			$objectStatistic = $this->getResourceObject("objectStatistic","id",$this->viewFromArguments("object"));			
-			return $modifiedDate == $objectStatistic->getModified() && $eTag == $objectStatistic->getETag();
+			$queryStatistic = $this->getResourceObject("QueryStatistic","id",$this->viewFromArguments("query"));			
+			return $modifiedDate == $queryStatistic->getModified() && $eTag == $queryStatistic->getETag();
 		}
 	}
 ?>

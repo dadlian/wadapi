@@ -36,10 +36,8 @@
 			$statementParameters = array_slice($arguments, 1, $expectedParameterCount);
 			$statementParameterCount = sizeof($statementParameters);
 			
-			if($statementParameterCount < $expectedParameterCount){
-				fatal_error(DATABASE_EXECUTE_ERROR, "Incorrect number of parameters passed to DatabaseAdministrator::execute(). ".
-						"$statementParameterCount Passed, $expectedParameterCount Expected.");
-				return;
+			for($i = $statementParameterCount; $i < $expectedParameterCount; $i++){
+				$statementParameters[] = "?";
 			}
 			
 			$statement = self::addPrefixes($statement);

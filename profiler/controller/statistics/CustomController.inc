@@ -1,5 +1,5 @@
 <?php
-	abstract class QueryController extends PagedResourceController{
+	abstract class CustomController extends PagedResourceController{
 		protected function isInvalid(){
 			$invalidArguments = array();
 			return $invalidArguments;
@@ -11,7 +11,7 @@
 			$sort = RequestHandler::getQueryParameter("sort");
 			$order = RequestHandler::getQueryParameter("order");
 			
-			if($sort && !in_array($sort,array("executions","runtime"))){
+			if($sort && !in_array($sort,array("runs","duration"))){
 				$invalidQueryParameters[] = "sort";
 			}
 			
@@ -26,8 +26,8 @@
 			$api = $this->getResourceObject("API","id",$this->viewFromArguments("api"));
 			$endpoint = $this->getResourceObject("EndpointStatistic","id",$this->viewFromArguments("endpoint"));
 			
-			$countResult = DatabaseAdministrator::execute("SELECT COUNT(query) as queries FROM QueryStatistic WHERE api='{$api->getId()}' AND endpoint='{$endpoint->getEndpoint()}'");
-			$count = $countResult[0]["queries"];
+			$countResult = DatabaseAdministrator::execute("SELECT COUNT(customKey) as customs FROM CustomStatistic WHERE api='{$api->getId()}' AND endpoint='{$endpoint->getEndpoint()}'");
+			$count = $countResult[0]["customs"];
 			
 			return $count;
 		}
@@ -51,30 +51,30 @@
 			
 			$sorter->addCriterion($sort,$order);
 		
-			$queryStatistics = Array();
-			foreach($sqlGateway->find("QueryStatistic",$searcher,$sorter,$count,$start) as $index => $queryStatistic){
-				$queryStatistics[strval($queryStatistic->getRuntime()/$queryStatistic->getExecutions()).$index] = $queryStatistic;
+			$customStatistics = Array();
+			foreach($sqlGateway->find("CustomStatistic",$searcher,$sorter,$count,$start) as $index => $customStatistic){
+				$customStatistics[strval($customStatistic->getDuration()/$customStatistic->getRuns()).$index] = $customStatistic;
 			}
 			
-			if($sort == "runtime" && $order == "ASC"){
-				ksort($queryStatistics);
-			}else if($sort == "runtime" && $order == "DESC"){
-				krsort($queryStatistics);
+			if($sort == "runs" && $order == "ASC"){
+				ksort($customStatistics);
+			}else if($sort == "runs" && $order == "DESC"){
+				krsort($customStatistics);
 			}
 			
-			foreach($queryStatistics as $queryStatistic){
-				$payload[] = $this->assemblePayload($queryStatistic);
+			foreach($customStatistics as $customStatistic){
+				$payload[] = $this->assemblePayload($customStatistic);
 			}
 			
 			return $payload;
 		}
 		
-		protected function assemblePayload($queryStatistic){
+		protected function assemblePayload($customStatistic){
 			$payload = array(
-				"self"=>$queryStatistic->getURI(),
-				"class"=>$queryStatistic->getQuery(),
-				"request-executions"=>sprintf("%.2f",$queryStatistic->getExecutions()/$queryStatistic->getRequests()),
-				"query-runtime"=>sprintf("%.4f",$queryStatistic->getRuntime()/$queryStatistic->getExecutions())
+				"self"=>$customStatistic->getURI(),
+				"key"=>$customStatistic->getCustomKey(),
+				"runs"=>sprintf("%.2f",$customStatistic->getRuns()/$customStatistic->getRequests()),
+				"duration"=>sprintf("%.4f",$customStatistic->getDuration()/$customStatistic->getRuns())
 			);
 			
 			return $payload;

@@ -1,5 +1,5 @@
 <?php
-	abstract class QueryController extends PagedResourceController{
+	abstract class CallController extends PagedResourceController{
 		protected function isInvalid(){
 			$invalidArguments = array();
 			return $invalidArguments;
@@ -11,7 +11,7 @@
 			$sort = RequestHandler::getQueryParameter("sort");
 			$order = RequestHandler::getQueryParameter("order");
 			
-			if($sort && !in_array($sort,array("executions","runtime"))){
+			if($sort && !in_array($sort,array("calls","roundtrip"))){
 				$invalidQueryParameters[] = "sort";
 			}
 			
@@ -26,8 +26,8 @@
 			$api = $this->getResourceObject("API","id",$this->viewFromArguments("api"));
 			$endpoint = $this->getResourceObject("EndpointStatistic","id",$this->viewFromArguments("endpoint"));
 			
-			$countResult = DatabaseAdministrator::execute("SELECT COUNT(query) as queries FROM QueryStatistic WHERE api='{$api->getId()}' AND endpoint='{$endpoint->getEndpoint()}'");
-			$count = $countResult[0]["queries"];
+			$countResult = DatabaseAdministrator::execute("SELECT COUNT(externalCall) as calls FROM CallStatistic WHERE api='{$api->getId()}' AND endpoint='{$endpoint->getEndpoint()}'");
+			$count = $countResult[0]["calls"];
 			
 			return $count;
 		}
@@ -51,30 +51,30 @@
 			
 			$sorter->addCriterion($sort,$order);
 		
-			$queryStatistics = Array();
-			foreach($sqlGateway->find("QueryStatistic",$searcher,$sorter,$count,$start) as $index => $queryStatistic){
-				$queryStatistics[strval($queryStatistic->getRuntime()/$queryStatistic->getExecutions()).$index] = $queryStatistic;
+			$callStatistics = Array();
+			foreach($sqlGateway->find("CallStatistic",$searcher,$sorter,$count,$start) as $index => $callStatistic){
+				$callStatistics[strval($callStatistic->getRoundtrip()/$callStatistic->getCalls()).$index] = $callStatistic;
 			}
 			
 			if($sort == "runtime" && $order == "ASC"){
-				ksort($queryStatistics);
+				ksort($callStatistics);
 			}else if($sort == "runtime" && $order == "DESC"){
-				krsort($queryStatistics);
+				krsort($callStatistics);
 			}
 			
-			foreach($queryStatistics as $queryStatistic){
-				$payload[] = $this->assemblePayload($queryStatistic);
+			foreach($callStatistics as $callStatistic){
+				$payload[] = $this->assemblePayload($callStatistic);
 			}
 			
 			return $payload;
 		}
 		
-		protected function assemblePayload($queryStatistic){
+		protected function assemblePayload($callStatistic){
 			$payload = array(
-				"self"=>$queryStatistic->getURI(),
-				"class"=>$queryStatistic->getQuery(),
-				"request-executions"=>sprintf("%.2f",$queryStatistic->getExecutions()/$queryStatistic->getRequests()),
-				"query-runtime"=>sprintf("%.4f",$queryStatistic->getRuntime()/$queryStatistic->getExecutions())
+				"self"=>$callStatistic->getURI(),
+				"call"=>$callStatistic->getExternalCall(),
+				"request-calls"=>sprintf("%.2f",$callStatistic->getCalls()/$callStatistic->getRequests()),
+				"call-roundtrip"=>sprintf("%.4f",$callStatistic->getRoundtrip()/$callStatistic->getCalls())
 			);
 			
 			return $payload;

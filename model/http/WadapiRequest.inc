@@ -72,6 +72,21 @@
 			$this->insertToHeaders("Slug",$suggestion);
 		}
 		
+		protected function getFullURI(){
+			$protocol = ($this->getTransport()=="ssl")?"https":"http";
+			
+			$queryString = "";
+			if($this->getArguments()){
+				$queryString = array();
+				foreach($this->getArguments() as $key=>$value){
+					$queryString[] = "$key=".urlencode($value);
+				}
+				$queryString = "?".implode("&",$queryString);
+			}
+			
+			return "$protocol://{$this->getHost()}{$this->getEndpoint()}$queryString";
+		}
+		
 		protected function get(){
 			$this->setMethod("GET");
 			return $this->send();
@@ -100,6 +115,8 @@
 			if(!$remoteConnection){
 				fatal_error("There was a problem establishing a remote connection.","$errorNumber: $errorString");
 			}
+			
+			Detective::investigate("{$this->getMethod()} {$this->getFullURI()}",false);
 			
 			//Build Request
 			$request = "";
@@ -180,6 +197,7 @@
 				fclose($remoteConnection);
 			}
 			
+			Detective::closeCase("{$this->getMethod()} {$this->getFullURI()}",false);
 			return $response;
 		}
 		

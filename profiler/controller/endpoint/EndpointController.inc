@@ -65,13 +65,15 @@
 		protected function assemblePayload($endpointStatistic){
 			$payload = array(
 				"self"=>$endpointStatistic->getURI(),
-				"uri"=>$endpointStatistic->getEndpoint(),
+				"request"=>$endpointStatistic->getEndpoint(),
 				"average-runtime"=>floatval(sprintf("%.4f",$endpointStatistic->getRuntime())),
 				"daily-requests"=>floatval(sprintf("%.2f",$endpointStatistic->getRequests())),
 				"runtimes"=>"{$endpointStatistic->getURI()}/runtimes",
 				"requests"=>"{$endpointStatistic->getURI()}/requests",
 				"objects"=>"{$endpointStatistic->getURI()}/objects",
-				"queries"=>"{$endpointStatistic->getURI()}/queries"
+				"queries"=>"{$endpointStatistic->getURI()}/queries",
+				"calls"=>"{$endpointStatistic->getURI()}/calls",
+				"custom"=>"{$endpointStatistic->getURI()}/custom"
 			);
 			
 			return $payload;

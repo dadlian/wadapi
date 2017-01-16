@@ -7,7 +7,7 @@
 		}
 		
 		protected function isConsistent($modifiedDate,$eTag){
-			$objectStatistic = $this->getResourceObject("objectStatistic","id",$this->viewFromArguments("object"));			
+			$objectStatistic = $this->getResourceObject("ObjectStatistic","id",$this->viewFromArguments("object"));			
 			return $modifiedDate == $objectStatistic->getModified() && $eTag == $objectStatistic->getETag();
 		}
 	}
