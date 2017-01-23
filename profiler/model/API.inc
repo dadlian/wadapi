@@ -1,6 +1,9 @@
 <?php
 	class API extends Resource{
 		/** @String */
+		protected $name;
+		
+		/** @String */
 		protected $root;
 		
 		protected function getURI(){

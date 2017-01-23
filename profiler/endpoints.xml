@@ -99,7 +99,8 @@
 			<parameters>
 			</parameters>
 			<requirements>
-				<req1>root</req1>
+				<req1>name</req1>
+				<req2>root</req2>
 			</requirements>
 		</endpoint>
 		<endpoint>

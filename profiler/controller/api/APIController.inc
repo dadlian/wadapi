@@ -25,8 +25,10 @@
 		protected function buildPageEntries($start,$count){
 			$payload = array();
 			$sqlGateway = new SQLGateway();
+			$sorter = new Sorter();
+			$sorter->addCriterion("name",Criterion::ASCENDING);
 		
-			foreach($sqlGateway->find("API",new Searcher(),new Sorter,$count,$start) as $api){
+			foreach($sqlGateway->find("API",new Searcher(),$sorter,$count,$start) as $api){
 				$payload[] = $this->assemblePayload($api);
 			}
 			
@@ -36,6 +38,7 @@
 		protected function assemblePayload($api){
 			$payload = array(
 				"self"=>$api->getURI(),
+				"name"=>$api->getName(),
 				"root"=>$api->getRoot(),
 				"daily-requests"=>$api->getDailyRequests(),
 				"endpoints"=>array(

@@ -10,7 +10,7 @@
 			$api = $this->getResourceObject("API","id",$this->viewFromArguments("api"));
 			CryptKeeper::bury($api);
 			
-			ResponseHandler::deleted("API: {$api->getRoot()} has been removed.");
+			ResponseHandler::deleted("API: {$api->getName()} has been removed.");
 		}
 		
 		protected function isConsistent($modifiedDate,$eTag){

@@ -11,7 +11,7 @@
 			$sort = RequestHandler::getQueryParameter("sort");
 			$order = RequestHandler::getQueryParameter("order");
 			
-			if($sort && !in_array($sort,array("requests","runtime"))){
+			if($sort && !in_array($sort,array("uri","requests","runtime"))){
 				$invalidQueryParameters[] = "sort";
 			}
 			
@@ -35,7 +35,9 @@
 			$api = $this->getResourceObject("API","id",$this->viewFromArguments("api"));
 			
 			$sort = RequestHandler::getQueryParameter("sort");
-			if($sort == "requests"){
+			if($sort == "uri"){
+				$sort = "endpoint";
+			}else if($sort == "requests"){
 				$sort = "dailyRequests";
 			}else if($sort == "runtimes"){
 				$sort = "averageRuntime";

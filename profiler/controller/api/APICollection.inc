@@ -4,7 +4,7 @@
 			$sqlGateway = new SQLGateway();
 			
 			//Create Access Token
-			$api = new API($this->getFromContent("root"));
+			$api = new API($this->getFromContent("name"),$this->getFromContent("root"));
 			$sqlGateway->save($api);
 			
 			$payload = $this->assemblePayload($api);
