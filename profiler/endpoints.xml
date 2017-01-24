@@ -240,6 +240,101 @@
 			</requirements>
 		</endpoint>
 		<endpoint>
+			<name>Variant Collection</name>
+			<path>apis/@/endpoints/@/variants</path>
+			<controller>VariantCollection</controller>
+			<roles>
+				<master>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</master>
+				<consumer>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</consumer>
+			</roles>
+			<parameters>
+				<param1>api</param1>
+				<param2>endpoint</param2>
+			</parameters>
+			<requirements>
+			</requirements>
+		</endpoint>
+		<endpoint>
+			<name>Variant Resource</name>
+			<path>apis/@/endpoints/@/variants/@</path>
+			<controller>VariantResource</controller>
+			<roles>
+				<master>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</master>
+				<consumer>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</consumer>
+			</roles>
+			<parameters>
+				<param1>api</param1>
+				<param2>endpoint</param2>
+				<param3>variant</param3>
+			</parameters>
+			<requirements>
+			</requirements>
+		</endpoint>
+		<endpoint>
+			<name>Variant Runtimes Resource</name>
+			<path>apis/@/endpoints/@/variants/@/runtimes</path>
+			<controller>VariantRuntimesResource</controller>
+			<roles>
+				<master>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</master>
+				<consumer>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</consumer>
+			</roles>
+			<parameters>
+				<param1>api</param1>
+				<param2>endpoint</param2>
+				<param3>variant</param3>
+			</parameters>
+			<requirements>
+			</requirements>
+		</endpoint>
+		<endpoint>
+			<name>Variant Requests Resource</name>
+			<path>apis/@/endpoints/@/variants/@/requests</path>
+			<controller>VariantRequestsResource</controller>
+			<roles>
+				<master>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</master>
+				<consumer>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</consumer>
+			</roles>
+			<parameters>
+				<param1>api</param1>
+				<param2>endpoint</param2>
+				<param3>variant</param3>
+			</parameters>
+			<requirements>
+			</requirements>
+		</endpoint>
+		<endpoint>
 			<name>Object Collection</name>
 			<path>apis/@/endpoints/@/objects</path>
 			<controller>ObjectCollection</controller>

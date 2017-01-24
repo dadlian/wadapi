@@ -75,13 +75,12 @@
 				"request"=>$endpointStatistic->getEndpoint(),
 				"average-runtime"=>floatval(sprintf("%.4f",$endpointStatistic->getRuntime())),
 				"daily-requests"=>floatval(sprintf("%.2f",$endpointStatistic->getRequests())),
-				"variants"=>$endpointStatistic->getVariants(),
+				"variants"=>array(
+					"self"=>"{$endpointStatistic->getURI()}/variants",
+					"total"=>$endpointStatistic->getVariants()
+				),
 				"runtimes"=>"{$endpointStatistic->getURI()}/runtimes",
-				"requests"=>"{$endpointStatistic->getURI()}/requests",
-				"objects"=>"{$endpointStatistic->getURI()}/objects",
-				"queries"=>"{$endpointStatistic->getURI()}/queries",
-				"calls"=>"{$endpointStatistic->getURI()}/calls",
-				"custom"=>"{$endpointStatistic->getURI()}/custom"
+				"requests"=>"{$endpointStatistic->getURI()}/requests"
 			);
 			
 			return $payload;
