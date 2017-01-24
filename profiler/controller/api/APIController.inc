@@ -41,6 +41,7 @@
 				"name"=>$api->getName(),
 				"root"=>$api->getRoot(),
 				"daily-requests"=>$api->getDailyRequests(),
+				"requests"=>"{$api->getURI()}/requests",
 				"endpoints"=>array(
 					"self"=>"{$api->getURI()}/endpoints",
 					"total"=>$api->getTotalEndpoints()

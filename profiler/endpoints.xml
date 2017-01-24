@@ -127,6 +127,28 @@
 			</requirements>
 		</endpoint>
 		<endpoint>
+			<name>API Requests Resource</name>
+			<path>apis/@/requests</path>
+			<controller>APIRequestsResource</controller>
+			<roles>
+				<master>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</master>
+				<consumer>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</consumer>
+			</roles>
+			<parameters>
+				<param1>api</param1>
+			</parameters>
+			<requirements>
+			</requirements>
+		</endpoint>
+		<endpoint>
 			<name>Endpoint Collection</name>
 			<path>apis/@/endpoints</path>
 			<controller>EndpointCollection</controller>
@@ -172,9 +194,9 @@
 			</requirements>
 		</endpoint>
 		<endpoint>
-			<name>Runtimes Resource</name>
+			<name>Endpoint Runtimes Resource</name>
 			<path>apis/@/endpoints/@/runtimes</path>
-			<controller>RuntimesResource</controller>
+			<controller>EndpointRuntimesResource</controller>
 			<roles>
 				<master>
 					<permissions>
@@ -195,9 +217,9 @@
 			</requirements>
 		</endpoint>
 		<endpoint>
-			<name>Requests Resource</name>
+			<name>Endpoint Requests Resource</name>
 			<path>apis/@/endpoints/@/requests</path>
-			<controller>RequestsResource</controller>
+			<controller>EndpointRequestsResource</controller>
 			<roles>
 				<master>
 					<permissions>

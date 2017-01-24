@@ -25,7 +25,7 @@
 		protected function getRecordCount(){
 			$api = $this->getResourceObject("API","id",$this->viewFromArguments("api"));
 			
-			$countResult = DatabaseAdministrator::execute("SELECT COUNT(DISTINCT(endpoint)) as endpoints FROM EndpointStatistic WHERE api = ?",$api->getId());
+			$countResult = DatabaseAdministrator::execute("SELECT COUNT(DISTINCT(SUBSTRING_INDEX(endpoint,'?',1))) as endpoints FROM EndpointStatistic WHERE api = {$api->getId()}");
 			$count = $countResult[0]["endpoints"];
 			
 			return $count;
@@ -49,9 +49,14 @@
 			$order = $order?$order:"asc";
 		
 			$endpointStatisticStatistics = array();
-			foreach(DatabaseAdministrator::execute("SELECT MIN(id) AS id, endpoint, AVG(runtime)/AVG(requests) as averageRuntime, AVG(requests) AS dailyRequests ".
-								"FROM EndpointStatistic WHERE api = ? GROUP BY endpoint ORDER BY $sort $order",$api->getId()) as $row){
-				$nextEndpoint = new EndpointStatistic($api,$row['endpoint'],"",$row['averageRuntime'],$row['dailyRequests']);
+			foreach(DatabaseAdministrator::execute("SELECT MIN(id) AS id, SUBSTRING_INDEX(endpoint,'?',1) as endpointRoot, MIN(date) as startDate, AVG(runtime)/AVG(requests) as averageRuntime, SUM(requests) AS totalRequests ".
+								"FROM EndpointStatistic WHERE api = {$api->getId()} GROUP BY 2 ORDER BY $sort $order") as $row){
+				
+				$startDate = new DateTime($row['startDate']);
+				$today = new DateTime(date("Y-m-d"));
+				$daysActive = intval($today->diff($startDate)->format("%a")) + 1;
+				
+				$nextEndpoint = new EndpointStatistic($api,$row['endpointRoot'],"",$row['averageRuntime'],$row['totalRequests']/$daysActive);
 				$nextEndpoint->setId($row['id']);
 				$endpointStatisticStatistics[] = $nextEndpoint;
 			}
@@ -70,6 +75,7 @@
 				"request"=>$endpointStatistic->getEndpoint(),
 				"average-runtime"=>floatval(sprintf("%.4f",$endpointStatistic->getRuntime())),
 				"daily-requests"=>floatval(sprintf("%.2f",$endpointStatistic->getRequests())),
+				"variants"=>$endpointStatistic->getVariants(),
 				"runtimes"=>"{$endpointStatistic->getURI()}/runtimes",
 				"requests"=>"{$endpointStatistic->getURI()}/requests",
 				"objects"=>"{$endpointStatistic->getURI()}/objects",

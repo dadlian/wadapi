@@ -15,6 +15,11 @@
 		/** @Float */
 		protected $requests;
 		
+		protected function getVariants(){
+			$variantsResult = DatabaseAdministrator::execute("SELECT COUNT(DISTINCT(endpoint)) as endpoints FROM EndpointStatistic WHERE api = '{$this->getApi()->getId()}' AND SUBSTRING_INDEX(endpoint,'?',1) = '{$this->getEndpoint()}'");
+			return $variantsResult?$variantsResult[0]['endpoints']:1;
+		}
+		
 		protected function getURI(){
 			return $this->getBaseUri()."/apis/{$this->getApi()->getId()}/endpoints/{$this->getId()}";
 		}
