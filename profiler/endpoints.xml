@@ -149,6 +149,28 @@
 			</requirements>
 		</endpoint>
 		<endpoint>
+			<name>API Runtimes Resource</name>
+			<path>apis/@/runtimes</path>
+			<controller>APIRuntimesResource</controller>
+			<roles>
+				<master>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</master>
+				<consumer>
+					<permissions>
+						<permission1>read</permission1>
+					</permissions>
+				</consumer>
+			</roles>
+			<parameters>
+				<param1>api</param1>
+			</parameters>
+			<requirements>
+			</requirements>
+		</endpoint>
+		<endpoint>
 			<name>Endpoint Collection</name>
 			<path>apis/@/endpoints</path>
 			<controller>EndpointCollection</controller>
@@ -336,7 +358,7 @@
 		</endpoint>
 		<endpoint>
 			<name>Object Collection</name>
-			<path>apis/@/endpoints/@/objects</path>
+			<path>apis/@/endpoints/@/variants/@/objects</path>
 			<controller>ObjectCollection</controller>
 			<roles>
 				<master>
@@ -353,13 +375,14 @@
 			<parameters>
 				<param1>api</param1>
 				<param2>endpoint</param2>
+				<param3>variant</param3>
 			</parameters>
 			<requirements>
 			</requirements>
 		</endpoint>
 		<endpoint>
 			<name>Object Resource</name>
-			<path>apis/@/endpoints/@/objects/@</path>
+			<path>apis/@/endpoints/@/variants/@/objects/@</path>
 			<controller>ObjectResource</controller>
 			<roles>
 				<master>
@@ -376,14 +399,15 @@
 			<parameters>
 				<param1>api</param1>
 				<param2>endpoint</param2>
-				<param3>object</param3>
+				<param3>variant</param3>
+				<param4>object</param4>
 			</parameters>
 			<requirements>
 			</requirements>
 		</endpoint>
 		<endpoint>
 			<name>Query Collection</name>
-			<path>apis/@/endpoints/@/queries</path>
+			<path>apis/@/endpoints/@/variants/@/queries</path>
 			<controller>QueryCollection</controller>
 			<roles>
 				<master>
@@ -400,13 +424,14 @@
 			<parameters>
 				<param1>api</param1>
 				<param2>endpoint</param2>
+				<param3>variant</param3>
 			</parameters>
 			<requirements>
 			</requirements>
 		</endpoint>
 		<endpoint>
 			<name>Query Resource</name>
-			<path>apis/@/endpoints/@/queries/@</path>
+			<path>apis/@/endpoints/@/variants/@/queries/@</path>
 			<controller>QueryResource</controller>
 			<roles>
 				<master>
@@ -423,14 +448,15 @@
 			<parameters>
 				<param1>api</param1>
 				<param2>endpoint</param2>
-				<param3>query</param3>
+				<param3>variant</param3>
+				<param4>query</param4>
 			</parameters>
 			<requirements>
 			</requirements>
 		</endpoint>
 		<endpoint>
 			<name>Call Collection</name>
-			<path>apis/@/endpoints/@/calls</path>
+			<path>apis/@/endpoints/@/variants/@/calls</path>
 			<controller>CallCollection</controller>
 			<roles>
 				<master>
@@ -447,13 +473,14 @@
 			<parameters>
 				<param1>api</param1>
 				<param2>endpoint</param2>
+				<param3>variant</param3>
 			</parameters>
 			<requirements>
 			</requirements>
 		</endpoint>
 		<endpoint>
 			<name>Call Resource</name>
-			<path>apis/@/endpoints/@/calls/@</path>
+			<path>apis/@/endpoints/@/variants/@/calls/@</path>
 			<controller>CallResource</controller>
 			<roles>
 				<master>
@@ -470,14 +497,15 @@
 			<parameters>
 				<param1>api</param1>
 				<param2>endpoint</param2>
-				<param3>call</param3>
+				<param3>variant</param3>
+				<param4>call</param4>
 			</parameters>
 			<requirements>
 			</requirements>
 		</endpoint>
 		<endpoint>
 			<name>Custom Collection</name>
-			<path>apis/@/endpoints/@/custom</path>
+			<path>apis/@/endpoints/@/variants/@/custom</path>
 			<controller>CustomCollection</controller>
 			<roles>
 				<master>
@@ -494,13 +522,14 @@
 			<parameters>
 				<param1>api</param1>
 				<param2>endpoint</param2>
+				<param3>variant</param3>
 			</parameters>
 			<requirements>
 			</requirements>
 		</endpoint>
 		<endpoint>
 			<name>Custom Resource</name>
-			<path>apis/@/endpoints/@/custom/@</path>
+			<path>apis/@/endpoints/@/variants/@/custom/@</path>
 			<controller>CustomResource</controller>
 			<roles>
 				<master>
@@ -517,7 +546,8 @@
 			<parameters>
 				<param1>api</param1>
 				<param2>endpoint</param2>
-				<param3>custom</param3>
+				<param3>variant</param3>
+				<param4>custom</param4>
 			</parameters>
 			<requirements>
 			</requirements>

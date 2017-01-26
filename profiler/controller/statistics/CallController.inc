@@ -24,15 +24,18 @@
 		
 		protected function getRecordCount(){
 			$api = $this->getResourceObject("API","id",$this->viewFromArguments("api"));
-			$endpoint = $this->getResourceObject("EndpointStatistic","id",$this->viewFromArguments("endpoint"));
+			$variant = $this->getResourceObject("EndpointStatistic","id",$this->viewFromArguments("variant"));
 			
-			$countResult = DatabaseAdministrator::execute("SELECT COUNT(externalCall) as calls FROM CallStatistic WHERE api='{$api->getId()}' AND endpoint='{$endpoint->getEndpoint()}'");
+			$countResult = DatabaseAdministrator::execute("SELECT COUNT(externalCall) as calls FROM CallStatistic WHERE api='{$api->getId()}' AND endpoint='{$variant->getEndpoint()}'");
 			$count = $countResult[0]["calls"];
 			
 			return $count;
 		}
 		
 		protected function buildPageEntries($start,$count){
+			$api = $this->getResourceObject("API","id",$this->viewFromArguments("api"));
+			$variant = $this->getResourceObject("EndpointStatistic","id",$this->viewFromArguments("variant"));
+			
 			$payload = array();
 			$sqlGateway = new SQLGateway();
 			$searcher = new Searcher();
@@ -44,10 +47,8 @@
 			$order = RequestHandler::getQueryParameter("order");
 			$order = strtoupper($order?$order:"asc");
 			
-			$searcher->addCriterion("api",Criterion::EQUAL,$this->viewFromArguments("api"));
-			
-			$endpoint = $this->getResourceObject("EndpointStatistic","id",$this->viewFromArguments("endpoint"));
-			$searcher->addCriterion("endpoint",Criterion::EQUAL,$endpoint->getEndpoint());
+			$searcher->addCriterion("api",Criterion::EQUAL,$api->getId());
+			$searcher->addCriterion("endpoint",Criterion::EQUAL,$variant->getEndpoint());
 			
 			$sorter->addCriterion($sort,$order);
 		

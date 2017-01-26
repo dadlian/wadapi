@@ -1,5 +1,5 @@
 <?php
-	class EndpointRuntimesResource extends ResourceController{
+	class APIRuntimesResource extends ResourceController{
 		protected function isInvalid(){
 			$invalidArguments = array();
 			return $invalidArguments;
@@ -33,39 +33,41 @@
 		}
 		
 		protected function isConsistent($modifiedDate,$eTag){
-			$endpoint = $this->getResourceObject("Endpoint","id",$this->viewFromArguments("endpoint"));			
-			return $modifiedDate == $endpoint->getModified() && $eTag == $endpoint->getETag();
+			$api = $this->getResourceObject("API","id",$this->viewFromArguments("api"));			
+			return $modifiedDate == $api->getModified() && $eTag == $api->getETag();
 		}
 		
-		protected function assemblePayload($endpointStatistics){
+		protected function assemblePayload($apiStatistics){
 			$aggregator = RequestHandler::getQueryParameter("aggregator");
 			$aggregator = $aggregator?$aggregator:"date";
 			
 			$runtimesData = Array();
 			$startDate = date("Y-m-d");
-			foreach($endpointStatistics as $endpointStatistic){
-				$runtimesData[$endpointStatistic['aggregator']] = round($endpointStatistic['totalRuntime']/$endpointStatistic['totalRequests'],4);
+			foreach($apiStatistics as $apiStatistic){
+				$runtimesData[$apiStatistic['aggregator']] = round($apiStatistic['totalRuntime']/$apiStatistic['totalRequests'],4);
 				
 				if($aggregator == "date"){
-					if($endpointStatistic['aggregator'] < $startDate){
-						$startDate = $endpointStatistic['aggregator'];
+					if($apiStatistic['aggregator'] < $startDate){
+						$startDate = $apiStatistic['aggregator'];
 					}
 				}
 			}
 			
-			$endpointPayload = array();
+			$apiPayload = array();
 			if($aggregator == "date"){
 				$endDate = date("Y-m-d");
 				for($i = $startDate; $i <= $endDate; $i = date('Y-m-d',strtotime($i.' +1 day'))){
-					$endpointPayload[$i] = $runtimesData[$i]?$runtimesData[$i]:"0";
+					if(!array_key_exists($i,$apiPayload)){
+						$apiPayload[$i] = $runtimesData[$i]?$runtimesData[$i]:"0";
+					}
 				}
 			}else{
-				$endpointPayload = $runtimesData;
+				$apiPayload = $runtimesData;
 			}
 			
 			$payload = array(
 				"self"=>"{$this->getBase()}/".RequestHandler::getRequestURI(),
-				"runtimes"=>$endpointPayload
+				"runtimes"=>$apiPayload
 			);
 			
 			return $payload;
@@ -73,17 +75,13 @@
 		
 		protected function get(){
 			$api = $this->getResourceObject("API","id",$this->viewFromArguments("api"));
-			$endpoint = $this->getResourceObject("EndpointStatistic","id",$this->viewFromArguments("endpoint"));
-			$endpointParts = explode("?",$endpoint->getEndpoint());
-			$where = Array();
-			
 			$from = RequestHandler::getQueryParameter("from");
 			$to = RequestHandler::getQueryParameter("to");
 			$aggregator = RequestHandler::getQueryParameter("aggregator");
 			$order = RequestHandler::getQueryParameter("order");
+			$where = Array();
 			
 			$where[] = "api = '{$api->getId()}'";
-			$where[] = "SUBSTRING_INDEX(endpoint,'?',1) = '{$endpointParts[0]}'";
 			
 			if($from){
 				$where[] = "date >= '$from'";
@@ -93,13 +91,19 @@
 				$where[] = "date <= '$to'";
 			}
 			
+			if($aggregator == "endpoint"){
+				$aggregator = "SUBSTRING_INDEX(endpoint,'?',1)";
+			}
+			
+			$aggregator = $aggregator?$aggregator:"date";
+			
 			$whereClause = implode(" AND ",$where);
 			$order = $order?$order:"asc";
-			$aggregator = $aggregator?$aggregator:"date";
-	
+			
 			$runtimeResult = DatabaseAdministrator::execute("SELECT $aggregator as aggregator, SUM(runtime) as totalRuntime, SUM(requests) as totalRequests FROM EndpointStatistic WHERE $whereClause GROUP BY aggregator ORDER BY aggregator $order");
 			$payload = $this->assemblePayload($runtimeResult);
-			ResponseHandler::retrieved($payload,$endpoint->getURI(),$endpoint->getModified(),$endpoint->getETag());
+			
+			ResponseHandler::retrieved($payload,$api->getURI(),$api->getModified(),$api->getETag());
 		}
 	}
 ?>

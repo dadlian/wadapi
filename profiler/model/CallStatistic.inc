@@ -23,14 +23,18 @@
 		}
 		
 		protected function getURI(){
-			$endpointResults = DatabaseAdministrator::execute("SELECT id FROM EndpointStatistic WHERE api = '{$this->getApi()->getId()}' AND endpoint = '{$this->getEndpoint()}'");
-			$endpointId = $endpointResults?$endpointResults[0]["id"]:0;
+			$endpointParts = explode("?",$this->getEndpoint());
+			$endpointResults = DatabaseAdministrator::execute("SELECT MIN(id) as endpointId FROM EndpointStatistic WHERE api = '{$this->getApi()->getId()}' AND SUBSTRING_INDEX(endpoint,'?',1) = '{$endpointParts[0]}'");
+			$endpointId = $endpointResults?$endpointResults[0]["endpointId"]:0;
 			
-			return $this->getBaseUri()."/apis/{$this->getApi()->getId()}/endpoints/$endpointId/calls/{$this->getId()}";
+			$endpointResults = DatabaseAdministrator::execute("SELECT MAX(id) as variantId FROM EndpointStatistic WHERE api = '{$this->getApi()->getId()}' AND endpoint = '{$this->getEndpoint()}'");
+			$variantId = $endpointResults?$endpointResults[0]["variantId"]:0;
+			
+			return $this->getBaseUri()."/apis/{$this->getApi()->getId()}/endpoints/$endpointId/variants/$variantId/calls/{$this->getId()}";
 		}
 		
 		protected function getURITemplate(){
-			return $this->getBaseUri()."/apis/{api_id}/endpoints/{endpoint_id}/calls/{call_id}";
+			return $this->getBaseUri()."/apis/{api_id}/endpoints/{endpoint_id}/variants/{variant_id}/calls/{call_id}";
 		}
 		
 		protected function getETag(){

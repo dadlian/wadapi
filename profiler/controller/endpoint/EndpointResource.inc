@@ -3,9 +3,10 @@
 		protected function get(){
 			$api = $this->getResourceObject("API","id",$this->viewFromArguments("api"));
 			$endpoint = $this->getResourceObject("EndpointStatistic","id",$this->viewFromArguments("endpoint"));
+			$endpointParts = explode("?",$endpoint->getEndpoint());
 			
 			$endpointResults = DatabaseAdministrator::execute("SELECT AVG(runtime)/AVG(requests) as averageRuntime, SUM(requests) AS totalRequests ".
-								"FROM EndpointStatistic WHERE api = {$api->getId()} AND endpoint = '{$endpoint->getEndpoint()}'");
+								"FROM EndpointStatistic WHERE api = {$api->getId()} AND SUBSTRING_INDEX(endpoint,'?',1) = '{$endpointParts[0]}'");
 							
 			$startDate = new DateTime($endpointResults[0]['startDate']);
 			$today = new DateTime(date("Y-m-d"));

@@ -131,7 +131,7 @@
 			
 			
 			//Write Endpoint Statistics
-			$id = number_format(microtime(true)*10000,0,'','');
+			$id++;
 			$date = date("Y-m-d");
 			$runtime = round(microtime(true)-$GLOBALS["scriptStartTime"],5);
 			

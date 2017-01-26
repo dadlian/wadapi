@@ -10,6 +10,7 @@
 			
 			$from = RequestHandler::getQueryParameter("from");
 			$to = RequestHandler::getQueryParameter("to");
+			$aggregator = RequestHandler::getQueryParameter("aggregator");
 			$order = RequestHandler::getQueryParameter("order");
 			
 			if($from && !preg_match("/^[0-9]{4}-[0-1][0-9]-[0-3][0-9]$/",$from)){
@@ -18,6 +19,10 @@
 			
 			if($to && !preg_match("/^[0-9]{4}-[0-1][0-9]-[0-3][0-9]$/",$to)){
 				$invalidQueryParameters[] = "to";
+			}
+			
+			if($aggregator && !in_array($aggregator,array("date","endpoint"))){
+				$invalidQueryParameters[] = "aggregator";
 			}
 			
 			if($order && !in_array($order,array("asc","desc"))){
@@ -33,22 +38,31 @@
 		}
 		
 		protected function assemblePayload($apiStatistics){
+			$aggregator = RequestHandler::getQueryParameter("aggregator");
+			$aggregator = $aggregator?$aggregator:"date";
+			
 			$requestsData = Array();
 			$startDate = date("Y-m-d");
 			foreach($apiStatistics as $apiStatistic){
-				$requestsData[$apiStatistic['date']] = $apiStatistic['totalRequests'];
+				$requestsData[$apiStatistic['aggregator']] = $apiStatistic['totalRequests'];
 				
-				if($apiStatistic['date'] < $startDate){
-					$startDate = $apiStatistic['date'];
+				if($aggregator == "date"){
+					if($apiStatistic['aggregator'] < $startDate){
+						$startDate = $apiStatistic['aggregator'];
+					}
 				}
 			}
 			
 			$apiPayload = array();
-			$endDate = date("Y-m-d");
-			for($i = $startDate; $i <= $endDate; $i = date('Y-m-d',strtotime($i.' +1 day'))){
-				if(!array_key_exists($i,$apiPayload)){
-					$apiPayload[$i] = $requestsData[$i]?$requestsData[$i]:"0";
+			if($aggregator == "date"){
+				$endDate = date("Y-m-d");
+				for($i = $startDate; $i <= $endDate; $i = date('Y-m-d',strtotime($i.' +1 day'))){
+					if(!array_key_exists($i,$apiPayload)){
+						$apiPayload[$i] = $requestsData[$i]?$requestsData[$i]:"0";
+					}
 				}
+			}else{
+				$apiPayload = $requestsData;
 			}
 			
 			$payload = array(
@@ -63,6 +77,7 @@
 			$api = $this->getResourceObject("API","id",$this->viewFromArguments("api"));
 			$from = RequestHandler::getQueryParameter("from");
 			$to = RequestHandler::getQueryParameter("to");
+			$aggregator = RequestHandler::getQueryParameter("aggregator");
 			$order = RequestHandler::getQueryParameter("order");
 			$where = Array();
 			
@@ -76,10 +91,16 @@
 				$where[] = "date <= '$to'";
 			}
 			
+			if($aggregator == "endpoint"){
+				$aggregator = "SUBSTRING_INDEX(endpoint,'?',1)";
+			}
+			
+			$aggregator = $aggregator?$aggregator:"date";
+			
 			$whereClause = implode(" AND ",$where);
 			$order = $order?$order:"asc";
 			
-			$requestResult = DatabaseAdministrator::execute("SELECT date, SUM(requests) as totalRequests FROM EndpointStatistic WHERE $whereClause GROUP BY date ORDER BY date $order");
+			$requestResult = DatabaseAdministrator::execute("SELECT $aggregator as aggregator, SUM(requests) as totalRequests FROM EndpointStatistic WHERE $whereClause GROUP BY aggregator ORDER BY aggregator $order");
 			$payload = $this->assemblePayload($requestResult);
 			
 			ResponseHandler::retrieved($payload,$api->getURI(),$api->getModified(),$api->getETag());

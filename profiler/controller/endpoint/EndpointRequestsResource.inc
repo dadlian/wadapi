@@ -63,6 +63,10 @@
 			$endpointParts = explode("?",$endpoint->getEndpoint());
 			$where = Array();
 			
+			$from = RequestHandler::getQueryParameter("from");
+			$to = RequestHandler::getQueryParameter("to");
+			$order = RequestHandler::getQueryParameter("order");
+			
 			$where[] = "api = '{$api->getId()}'";
 			$where[] = "SUBSTRING_INDEX(endpoint,'?',1) = '{$endpointParts[0]}'";
 			

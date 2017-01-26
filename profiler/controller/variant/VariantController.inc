@@ -71,7 +71,7 @@
 					}
 				}
 				
-				$row['queryString'] = $row['queryString']?$row['queryString']:"None";
+				$row['queryString'] = $row['queryString']?$row['queryString']:"No Query";
 				$row['averageRequests'] = $row['totalRequests']/$daysActive;
 				$variantStatistics[] = $row;
 			}
@@ -82,12 +82,14 @@
 				$availableParameters = Array();
 				foreach(explode('&',substr($variantStatistic['queryString'],1)) as $query){
 					$queryParts = explode('=',$query);
-					$availableParameters[$queryParts[0]] = $queryParts[1];
+					if(sizeof($queryParts) > 1){
+						$availableParameters[$queryParts[0]] = $queryParts[1];
+					}
 				}
 				
 				$variantStatistic['parameters'] = Array();
 				foreach($parameters as $parameter){
-					$variantStatistic['parameters'][$parameter] = $availableParameters[$parameter]?$availableParameters[$parameter]:"N/A";
+					$variantStatistic['parameters'][$parameter] = array_key_exists($parameter,$availableParameters)?$availableParameters[$parameter]:"N/A";
 				}
 				
 				$payload[] = $this->assemblePayload($variantStatistic);
