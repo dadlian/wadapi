@@ -73,7 +73,7 @@
 		protected function assemblePayload($queryStatistic){
 			$payload = array(
 				"self"=>$queryStatistic->getURI(),
-				"class"=>$queryStatistic->getQuery(),
+				"query"=>$queryStatistic->getQuery(),
 				"request-executions"=>sprintf("%.2f",$queryStatistic->getExecutions()/$queryStatistic->getRequests()),
 				"query-runtime"=>sprintf("%.4f",$queryStatistic->getRuntime()/$queryStatistic->getExecutions())
 			);

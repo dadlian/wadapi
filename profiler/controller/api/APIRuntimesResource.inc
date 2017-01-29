@@ -11,6 +11,7 @@
 			$from = RequestHandler::getQueryParameter("from");
 			$to = RequestHandler::getQueryParameter("to");
 			$aggregator = RequestHandler::getQueryParameter("aggregator");
+			$records = RequestHandler::getQueryParameter("records");
 			$order = RequestHandler::getQueryParameter("order");
 			
 			if($from && !preg_match("/^[0-9]{4}-[0-1][0-9]-[0-3][0-9]$/",$from)){
@@ -23,6 +24,10 @@
 			
 			if($aggregator && !in_array($aggregator,array("date","endpoint"))){
 				$invalidQueryParameters[] = "aggregator";
+			}
+			
+			if($records && !is_int($records)){
+				$invalidQueryParameters[] = "records";
 			}
 			
 			if($order && !in_array($order,array("asc","desc"))){
@@ -78,6 +83,7 @@
 			$from = RequestHandler::getQueryParameter("from");
 			$to = RequestHandler::getQueryParameter("to");
 			$aggregator = RequestHandler::getQueryParameter("aggregator");
+			$records = RequestHandler::getQueryParameter("records");
 			$order = RequestHandler::getQueryParameter("order");
 			$where = Array();
 			
@@ -99,8 +105,9 @@
 			
 			$whereClause = implode(" AND ",$where);
 			$order = $order?$order:"asc";
+			$records = $records?$records:1000;
 			
-			$runtimeResult = DatabaseAdministrator::execute("SELECT $aggregator as aggregator, SUM(runtime) as totalRuntime, SUM(requests) as totalRequests FROM EndpointStatistic WHERE $whereClause GROUP BY aggregator ORDER BY aggregator $order");
+			$runtimeResult = DatabaseAdministrator::execute("SELECT $aggregator as aggregator, SUM(runtime) as totalRuntime, SUM(requests) as totalRequests FROM EndpointStatistic WHERE $whereClause GROUP BY aggregator ORDER BY SUM(runtime)/SUM(requests) $order LIMIT $records");
 			$payload = $this->assemblePayload($runtimeResult);
 			
 			ResponseHandler::retrieved($payload,$api->getURI(),$api->getModified(),$api->getETag());
