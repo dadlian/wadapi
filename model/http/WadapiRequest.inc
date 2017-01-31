@@ -3,28 +3,28 @@
 		/** @URL(required=true) */
 		protected $host;
 		
-		/** @String(default="") */
+		/** @WadapiString(default="") */
 		protected $endpoint;
 		
-		/** @String(values={'GET','HEAD','POST','PUT','DELETE','OPTIONS','TRACE','CONNECT'}, default='GET') */
+		/** @WadapiString(values={'GET','HEAD','POST','PUT','DELETE','OPTIONS','TRACE','CONNECT'}, default='GET') */
 		protected $method;
 		
-		/** @Collection(type=@String) */
+		/** @Collection(type=@WadapiString) */
 		protected $arguments;
 		
-		/** @Collection(type=@String) */
+		/** @Collection(type=@WadapiString) */
 		protected $headers;
 		
-		/** @String(default='text/plain') */
+		/** @WadapiString(default='text/plain') */
 		protected $contentType;
 		
 		/** @Integer */
 		protected $contentLength;
 		
-		/** @String */
+		/** @WadapiString */
 		protected $body;
 		
-		/** @String(default='tcp') */
+		/** @WadapiString(default='tcp') */
 		protected $transport;
 		
 		/** @Integer(default=80) */

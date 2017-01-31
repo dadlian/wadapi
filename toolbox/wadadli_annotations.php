@@ -27,17 +27,17 @@
 		public $max;
 	}
 	
-	class String extends RangedAnnotation {}
-	class URL extends String {}
-	class Email extends String {}
-	class Phone extends String {}
-	class Password extends String {}
-	class File extends String {}
+	class WadapiString extends RangedAnnotation {}
+	class URL extends WadapiString {}
+	class Email extends WadapiString {}
+	class Phone extends WadapiString {}
+	class Password extends WadapiString {}
+	class File extends WadapiString {}
 	class Image extends File {
 		public $height;
 		public $width;
 	}
-	class Text extends String {}
+	class Text extends WadapiString {}
 	
 	class Integer extends RangedAnnotation {}
 	class Float extends RangedAnnotation {}

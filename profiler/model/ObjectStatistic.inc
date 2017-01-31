@@ -3,10 +3,10 @@
 		/** @Object(class='API') */
 		protected $api;
 		
-		/** @String */
+		/** @WadapiString */
 		protected $endpoint;
 		
-		/** @String */
+		/** @WadapiString */
 		protected $class;
 		
 		/** @Integer */

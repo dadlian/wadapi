@@ -1,6 +1,6 @@
 <?php
 	abstract class SlugResource extends Resource{
-		/** @String */
+		/** @WadapiString */
 		protected $slug;
 		
 		public function __construct(){

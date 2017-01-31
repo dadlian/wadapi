@@ -6,11 +6,11 @@
 		const DEBUG = 'debug';	
 		
 		//The session in which the message was generated for persistent delivery
-		/** @String(required=true) */
+		/** @WadapiString(required=true) */
 		protected $session;
 		
 		//The message type. (Error, warning, success, etc.)
-		/** @String(required=true, values={'error', 'warning', 'success', 'debug'}) */
+		/** @WadapiString(required=true, values={'error', 'warning', 'success', 'debug'}) */
 		protected $type;
 		
 		//The text associated with this message
@@ -18,11 +18,11 @@
 		protected $text;
 		
 		//The message sender
-		/** @String(required=true) */
+		/** @WadapiString(required=true) */
 		protected $sender;
 		
 		//The intended message recipient
-		/** @String */
+		/** @WadapiString */
 		protected $recipient;
 	}
 ?>

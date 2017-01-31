@@ -1,6 +1,6 @@
 <?php
 	class Role extends PersistentClass{
-		/** @Collection(type=@String) */
+		/** @Collection(type=@WadapiString) */
 		protected $permissions;
 	}
 ?>

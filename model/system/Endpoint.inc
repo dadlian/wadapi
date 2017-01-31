@@ -3,7 +3,7 @@
 		/*
 		 * The unique name that identifies this endpoint
 		 */
-		/** @String(required=true) */
+		/** @WadapiString(required=true) */
 		protected $name;
 		
 		/*
@@ -15,7 +15,7 @@
 		/*
 		 * The name that identifies this endpoint and the controller that handles it
 		 */
-		/** @String(required=true) */
+		/** @WadapiString(required=true) */
 		protected $controller;
 		
 		/*
@@ -27,31 +27,31 @@
 		/*
 		 * A list of the expected parameters to this endpoint
 		 */
-		/** @Collection(type=@String) */
+		/** @Collection(type=@WadapiString) */
 		protected $parameters;
 		
 		/*
 		 * A list of the required arguments to this endpoint
 		 */
-		/** @Collection(type=@String) */
+		/** @Collection(type=@WadapiString) */
 		protected $requirements;
 		
 		/*
 		 * A list of MIME types which this endpoint can respond with (overides the global settings)
 		 */
-		/** @Collection(type=@String) */
+		/** @Collection(type=@WadapiString) */
 		protected $formats;
 		
 		/*
 		 * A list of character sets in which this endpoint can respond (overides the global settings)
 		 */
-		/** @Collection(type=@String) */
+		/** @Collection(type=@WadapiString) */
 		protected $charsets;
 		
 		/*
 		 * A list of languages in which this endpoint can respond (overides the global settings)
 		 */
-		/** @Collection(type=@String) */
+		/** @Collection(type=@WadapiString) */
 		protected $languages;
 		
 		public function getAllowedRoles(){

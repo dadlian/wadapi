@@ -1,9 +1,9 @@
 <?php
 	class API extends Resource{
-		/** @String */
+		/** @WadapiString */
 		protected $name;
 		
-		/** @String */
+		/** @WadapiString */
 		protected $root;
 		
 		protected function getURI(){

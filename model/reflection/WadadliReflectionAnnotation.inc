@@ -2,7 +2,7 @@
 	class WadadliReflectionAnnotation{
 		const COLLECTION = "Collection";
 		const OBJECT = "Object";
-		const STRING = "String";
+		const STRING = "WadapiString";
 		const BOOLEAN = "Boolean";
 		const DATE = "Date";
 		const INTEGER = "Integer";

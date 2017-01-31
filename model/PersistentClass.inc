@@ -8,19 +8,19 @@
 		/*
 		 * A unique integer identifying this object from other instances of the same class.
 		 */
-		/** @String(required=true, min=0, max=20)*/
+		/** @WadapiString(required=true, min=0, max=20)*/
 		protected $id;
 		
 		/*
 		 * A unix timestamp representing when this element was created.
 		 */
-		/** @String */
+		/** @WadapiString */
 		protected $created;
 		
 		/*
 		 * A unix timestamp representing when this element last had one of its values changed.
 		 */
-		/** @String */
+		/** @WadapiString */
 		protected $modified;
 		
 		/*

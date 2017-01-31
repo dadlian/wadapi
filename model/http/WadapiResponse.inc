@@ -3,22 +3,22 @@
 		/** @Integer */
 		protected $statusCode;
 		
-		/** @String */
+		/** @WadapiString */
 		protected $reason;
 		
-		/** @Collection(type=@String) */
+		/** @Collection(type=@WadapiString) */
 		protected $headers;
 		
-		/** @String */
+		/** @WadapiString */
 		protected $contentType;
 		
-		/** @String */
+		/** @WadapiString */
 		protected $contentCharset;
 		
-		/** @String */
+		/** @WadapiString */
 		protected $contentLanguage;
 		
-		/** @String */
+		/** @WadapiString */
 		protected $body;
 		
 		protected function setContentURI($contentLocation,$includeLocation=true){

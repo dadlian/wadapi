@@ -1,9 +1,9 @@
 <?php
 	class Warrant extends PersistentClass{
-		/** @String */
+		/** @WadapiString */
 		protected $code;
 		
-		/** @String */
+		/** @WadapiString */
 		protected $action;
 		
 		/** @Boolean(default=false) */

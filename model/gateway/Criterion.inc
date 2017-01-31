@@ -17,13 +17,13 @@
 		const NOT_LIKE = "NOT LIKE";
 		const REGEXP = "REGEXP";
 		
-		/** @String(required=true) */
+		/** @WadapiString(required=true) */
 		protected $field;
 		
-		/** @String(required=true) */
+		/** @WadapiString(required=true) */
 		protected $condition;
 		
-		/** @Collection(type=@String,required=true) */
+		/** @Collection(type=@WadapiString,required=true) */
 		protected $values;
 		
 		/*

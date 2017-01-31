@@ -4,10 +4,10 @@
 		const DATABASE = "database";
 		const LOGGING = "logging";
 		
-		/** @String */
+		/** @WadapiString */
 		protected $name;
 		
-		/** @Collection(type=@String) */
+		/** @Collection(type=@WadapiString) */
 		protected $values;
 		
 		/*

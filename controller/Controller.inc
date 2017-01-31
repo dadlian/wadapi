@@ -2,7 +2,7 @@
 	abstract class Controller extends WadadliClass{
 		const DASH_ESCAPE = "84sh1";
 	
-		/** @Collection(type=@String) */
+		/** @Collection(type=@WadapiString) */
 		protected $arguments;
 		
 		public function __construct(){

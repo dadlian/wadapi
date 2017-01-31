@@ -11,7 +11,7 @@
 		/*
 		 * The actual SQL query string
 		 */
-		/** @String(required=true) */
+		/** @WadapiString(required=true) */
 		protected $sqlString;
 		
 		/*

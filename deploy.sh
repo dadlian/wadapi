@@ -6,7 +6,7 @@ declare -r REPO_ROOT=$(dirname $BASH_SOURCE)
 if [ "$1" = "sandbox" ]; then
 	declare -r TARGET_DIR=sandbox@mywadapi.com:
 elif [ "$1" = "prod" ]; then
-	declare -r TARGET_DIR=wadapi@mywadapi.com:
+	declare -r TARGET_DIR=wadapi@profiler.mywadapi.com:
 else
 	echo "Please specify one of [sandbox/prod] as deploy target"
 	exit

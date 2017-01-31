@@ -3,25 +3,25 @@
 		/*
 		 * Database Host
 		 */
-		/** @String(required=true, default='localhost') */
+		/** @WadapiString(required=true, default='localhost') */
 		protected $hostname;
 		
 		/*
 		 * Database User
 		 */
-		/** @String(required=true, default='root') */
+		/** @WadapiString(required=true, default='root') */
 		protected $username;
 		
 		/*
 		 * Database Password
 		 */
-		/** @String(required=true) */
+		/** @WadapiString(required=true) */
 		protected $password;
 		
 		/*
 		 * Database Name
 		 */
-		/** @String(required=true) */
+		/** @WadapiString(required=true) */
 		protected $database;
 		
 		/*

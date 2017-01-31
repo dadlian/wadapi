@@ -1,18 +1,18 @@
 <?php
 	class APIToken extends Resource{
-		/** @String(required=true) */
+		/** @WadapiString(required=true) */
 		protected $role;
 		
 		/** @Integer */
 		protected $expires;
 		
-		/** @String(max=32) */
+		/** @WadapiString(max=32) */
 		protected $accessKey;
 		
-		/** @String(max=32) */
+		/** @WadapiString(max=32) */
 		protected $accessSecret;
 		
-		/** @String(max=32) */
+		/** @WadapiString(max=32) */
 		protected $refreshSecret;
 		
 		protected function refresh($lifetime=0){

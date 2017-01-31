@@ -1,12 +1,12 @@
 <?php
 	class Grave extends PersistentClass{
-		/** @String */
+		/** @WadapiString */
 		protected $objectClass;
 		
-		/** @String */
+		/** @WadapiString */
 		protected $objectId;
 		
-		/** @String */
+		/** @WadapiString */
 		protected $timeOfDeath;
 	}
 ?>
