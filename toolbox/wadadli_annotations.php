@@ -40,7 +40,7 @@
 	class Text extends WadapiString {}
 	
 	class Integer extends RangedAnnotation {}
-	class Float extends RangedAnnotation {}
+	class WadapiFloat extends RangedAnnotation {}
 	class Monetary extends RangedAnnotation {}
 	
 	class Collection extends RangedAnnotation{

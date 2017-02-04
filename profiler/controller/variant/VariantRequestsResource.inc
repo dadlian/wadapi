@@ -46,7 +46,7 @@
 			$variantPayload = array();
 			$endDate = date("Y-m-d");
 			for($i = $startDate; $i <= $endDate; $i = date('Y-m-d',strtotime($i.' +1 day'))){
-				$variantPayload[$i] = $requestsData[$i]?$requestsData[$i]:"0";
+				$variantPayload[$i] = array_key_exists($i,$requestsData)?$requestsData[$i]:"0";
 			}
 			
 			$payload = array(
@@ -61,6 +61,10 @@
 			$api = $this->getResourceObject("API","id",$this->viewFromArguments("api"));
 			$variant = $this->getResourceObject("EndpointStatistic","id",$this->viewFromArguments("variant"));
 			$where = Array();
+			
+			$from = RequestHandler::getQueryParameter("from");
+			$to = RequestHandler::getQueryParameter("to");
+			$order = RequestHandler::getQueryParameter("order");
 			
 			$where[] = "api = '{$api->getId()}'";
 			$where[] = "endpoint = '{$variant->getEndpoint()}'";

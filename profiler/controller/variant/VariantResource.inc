@@ -34,12 +34,14 @@
 			$availableParameters = Array();
 			foreach(explode('&',substr($variantResult['queryString'],1)) as $query){
 				$queryParts = explode('=',$query);
-				$availableParameters[$queryParts[0]] = $queryParts[1];
+				if(sizeof($queryParts)> 1){
+					$availableParameters[$queryParts[0]] = $queryParts[1];
+				}
 			}
 			
 			$variantResult['parameters'] = Array();
 			foreach($parameters as $parameter){
-				$variantResult['parameters'][$parameter] = $availableParameters[$parameter]?$availableParameters[$parameter]:"N/A";
+				$variantResult['parameters'][$parameter] = array_key_exists($parameter,$availableParameters)?$availableParameters[$parameter]:"N/A";
 			}
 				
 			$payload = $this->assemblePayload($variantResult);

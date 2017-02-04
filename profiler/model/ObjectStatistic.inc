@@ -12,7 +12,7 @@
 		/** @Integer */
 		protected $instances;
 		
-		/** @Float */
+		/** @WadapiFloat */
 		protected $loadTime;
 		
 		/** @Integer */

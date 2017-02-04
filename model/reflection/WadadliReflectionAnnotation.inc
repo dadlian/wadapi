@@ -6,7 +6,7 @@
 		const BOOLEAN = "Boolean";
 		const DATE = "Date";
 		const INTEGER = "Integer";
-		const FLOAT = "Float";
+		const FLOAT = "WadapiFloat";
 		const MONETARY = "Monetary";
 		const URL = "URL";
 		const EMAIL = "Email";

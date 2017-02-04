@@ -46,7 +46,7 @@
 			$endpointPayload = array();
 			$endDate = date("Y-m-d");
 			for($i = $startDate; $i <= $endDate; $i = date('Y-m-d',strtotime($i.' +1 day'))){
-				$endpointPayload[$i] = $requestsData[$i]?$requestsData[$i]:"0";
+				$endpointPayload[$i] = array_key_exists($i,$requestsData)?$requestsData[$i]:"0";
 			}
 			
 			$payload = array(

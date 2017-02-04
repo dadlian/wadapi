@@ -57,7 +57,7 @@
 			if($aggregator == "date"){
 				$endDate = date("Y-m-d");
 				for($i = $startDate; $i <= $endDate; $i = date('Y-m-d',strtotime($i.' +1 day'))){
-					$endpointPayload[$i] = $runtimesData[$i]?$runtimesData[$i]:"0";
+					$endpointPayload[$i] = array_key_exists($i,$runtimesData)?$runtimesData[$i]:"0";
 				}
 			}else{
 				$endpointPayload = $runtimesData;

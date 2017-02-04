@@ -1,5 +1,5 @@
 <?php
-	class ObjectResource extends ObjectController{
+	class QueryResource extends QueryController{
 		protected function get(){
 			$queryStatistic = $this->getResourceObject("QueryStatistic","id",$this->viewFromArguments("query"));	
 			$payload = $this->assemblePayload($queryStatistic);

@@ -12,7 +12,7 @@
 		/** @Integer */
 		protected $calls;
 		
-		/** @Float */
+		/** @WadapiFloat */
 		protected $roundtrip;
 		
 		/** @Integer */

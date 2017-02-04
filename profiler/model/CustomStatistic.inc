@@ -12,7 +12,7 @@
 		/** @Integer */
 		protected $runs;
 		
-		/** @Float */
+		/** @WadapiFloat */
 		protected $duration;
 		
 		/** @Integer */
