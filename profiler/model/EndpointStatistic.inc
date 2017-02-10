@@ -37,5 +37,26 @@
 			
 			return md5($this->getModified().$eTag);
 		}
+		
+		protected function getAverageObjects(){
+			$endpointParts = explode("?",$this->getEndpoint());
+			$objectsResult = DatabaseAdministrator::execute("SELECT AVG(objects) AS averageObjects FROM ".
+									"(SELECT COUNT(id) AS objects FROM ObjectStatistic WHERE SUBSTRING_INDEX(endpoint,'?',1) = '{$endpointParts[0]}' GROUP BY endpoint) as objectResult");
+			return $objectsResult[0]['averageObjects']?$objectsResult[0]['averageObjects']:0;
+		}
+		
+		protected function getAverageQueries(){
+			$endpointParts = explode("?",$this->getEndpoint());
+			$queriesResult = DatabaseAdministrator::execute("SELECT AVG(queries) AS averageQueries FROM ".
+									"(SELECT COUNT(id) AS queries FROM QueryStatistic WHERE SUBSTRING_INDEX(endpoint,'?',1) = '{$endpointParts[0]}' GROUP BY endpoint) as queryResult");
+			return $queriesResult[0]['averageQueries']?$queriesResult[0]['averageQueries']:0;
+		}
+		
+		protected function getAverageCalls(){
+			$endpointParts = explode("?",$this->getEndpoint());
+			$callsResult = DatabaseAdministrator::execute("SELECT AVG(calls) AS averageObjects FROM ".
+									"(SELECT COUNT(id) AS calls FROM CallStatistic WHERE SUBSTRING_INDEX(endpoint,'?',1) = '{$endpointParts[0]}' GROUP BY endpoint) as callResult");
+			return $callsResult[0]['averageObjects']?$callsResult[0]['averageObjects']:0;
+		}
 	}
 ?>

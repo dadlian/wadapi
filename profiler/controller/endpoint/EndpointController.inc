@@ -75,6 +75,9 @@
 				"request"=>$endpointStatistic->getEndpoint(),
 				"average-runtime"=>floatval(sprintf("%.4f",$endpointStatistic->getRuntime())),
 				"daily-requests"=>floatval(sprintf("%.2f",$endpointStatistic->getRequests())),
+				"request-objects"=>floatval(sprintf("%.2f",$endpointStatistic->getAverageObjects())),
+				"request-queries"=>floatval(sprintf("%.2f",$endpointStatistic->getAverageQueries())),
+				"request-calls"=>floatval(sprintf("%.2f",$endpointStatistic->getAverageCalls())),
 				"variants"=>array(
 					"self"=>"{$endpointStatistic->getURI()}/variants",
 					"total"=>$endpointStatistic->getVariants()
