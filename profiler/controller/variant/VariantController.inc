@@ -73,6 +73,16 @@
 				
 				$row['queryString'] = $row['queryString']?$row['queryString']:"No Query";
 				$row['averageRequests'] = $row['totalRequests']/$daysActive;
+				
+				$objectsResult = DatabaseAdministrator::execute("SELECT COUNT(id) AS averageObjects FROM ObjectStatistic WHERE endpoint = '$endpoint'");
+				$row['requestObjects'] = $objectsResult[0]['averageObjects']?$objectsResult[0]['averageObjects']:0;
+				
+				$queriesResult = DatabaseAdministrator::execute("SELECT COUNT(id) AS averageQueries FROM QueryStatistic WHERE endpoint = '$endpoint'");
+				$row['requestQueries'] = $queriesResult[0]['averageQueries']?$queriesResult[0]['averageQueries']:0;
+				
+				$callsResult = DatabaseAdministrator::execute("SELECT COUNT(id) AS averageCalls FROM CallStatistic WHERE endpoint = '$endpoint'");
+				$row['requestCalls'] = $callsResult[0]['averageCalls']?$callsResult[0]['averageCalls']:0;
+				
 				$variantStatistics[] = $row;
 			}
 			sort($parameters);
@@ -108,6 +118,9 @@
 				"parameters"=>$variantStatistic['parameters'],
 				"average-runtime"=>floatval(sprintf("%.4f",$variantStatistic['averageRuntime'])),
 				"daily-requests"=>floatval(sprintf("%.2f",$variantStatistic['averageRequests'])),
+				"request-objects"=>floatval(sprintf("%.2f",$variantStatistic['requestObjects'])),
+				"request-queries"=>floatval(sprintf("%.2f",$variantStatistic['requestQueries'])),
+				"request-calls"=>floatval(sprintf("%.2f",$variantStatistic['requestCalls'])),
 				"runtimes"=>"$uri/runtimes",
 				"requests"=>"$uri/requests",
 				"objects"=>"$uri/objects",
