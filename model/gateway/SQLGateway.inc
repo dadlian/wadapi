@@ -12,7 +12,7 @@
 		//A map of queued insert queries and their arguments for delayed execution
 		private $insertQueries;
 		
-		public function find($className, $searcher=null, $sorter=null, $records=0, $start=0, $fullLoad=true){
+		public function find($className, $searcher=null, $sorter=null, $records=0, $start=0,$lazyLoad=true){
 			$objects = array();
 			
 			//Verify that $className is a string
@@ -37,6 +37,7 @@
 				return $objects;
 			}
 			
+			//Verify that the reflect class is not abstract
 			if($reflectedClass->isAbstract()){
 				warning(UNEXPECTED_ARGUMENT_WARNING, "SQLGateway cannot search for abstract PersistentClasses. $className is abstract.");
 				return $objects;
@@ -379,13 +380,13 @@
 				}
 			}
 			
-			//If objects are to be lazy loaded we return the stubbed objects. Otherwise we load nested object and collections.
-			if($fullLoad && $objects){
+			//Load Child Objects and Collections
+			if($objects){
 				$subGateway = new SQLGateway();
 				$searcher = new Searcher();
 				foreach($reflectedClass->getProperties() as $property){
 					$setter = "set".capitalise($property->getName());
-					if($property->getAnnotation()->isObject()){
+					if(!$lazyLoad && $property->getAnnotation()->isObject()){
 						$containedClass = $property->getAnnotation()->getObjectClass();
 						$reflectedClass = Mirror::reflectClass($containedClass);
 						
@@ -401,7 +402,7 @@
 						$searcher->clearCriteria();
 						$searcher->addCriterion('id',Criterion::EQUAL,$ids);
 						
-						foreach($subGateway->find($containedClass, $searcher) as $memberObject){
+						foreach($subGateway->find($containedClass, $searcher,null,0,0,false) as $memberObject){
 							foreach($this->objectMembers[$property->getName()][$memberObject->getId()] as $objectId){
 								$objects[$objectId]->$setter($memberObject);
 							}
@@ -409,7 +410,7 @@
 					}else if($property->getAnnotation()->isCollection()){
 						$collections = $this->loadCollections($className.capitalise($property->getName()),
 											$property->getAnnotation()->getContainedType(),
-											array_keys($objects),strtolower($className));
+											array_keys($objects),strtolower($className),$lazyLoad);
 						
 						foreach($collections as $ownerID => $collection){
 							$objects[$ownerID]->$setter($collection);
@@ -1208,19 +1209,22 @@
 					
 					$arguments[] = $newDate;
 				}else if($property->getAnnotation()->isObject()){
+					//Make note of contained object for delayed loading
 					if(!array_key_exists($property->getName(), $this->objectMembers)){
 						$this->objectMembers[$property->getName()] = array();
 					}
 					
-					$arguments[] = null;
 					if($data[$field]){
 						if(!array_key_exists($data[$field],$this->objectMembers[$property->getName()])){
 							$this->objectMembers[$property->getName()][$data[$field]] = array();
 						}
 						
-						//Make note of contained object for delayed loading
 						$this->objectMembers[$property->getName()][$data[$field]][] = $data['id'];
 					}
+					
+					//Set object stub for lazy loading
+					$containedClass = $property->getAnnotation()->getObjectClass();
+					$arguments[] = call_user_func_array(array($containedClass,"bindInstance"),array($data[$field],new SQLGateway()));
 				}else if($property->getAnnotation()->isBoolean()){
 					$arguments[] = (bool)$data[$field];
 				}else if($property->getAnnotation()->isString()){
@@ -1245,7 +1249,7 @@
 		 /*
 		  * Delayed loading of object collections to ensure a single query to each table
 		  */
-		 private function loadCollections($listTable, $listAnnotation, $parentIds, $parentColumn = "parentList"){
+		 private function loadCollections($listTable, $listAnnotation, $parentIds, $parentColumn = "parentList", $lazyLoad = true){
 			$collections = array();
 			
 			$fields = "id,$parentColumn,name";
@@ -1266,9 +1270,16 @@
 					$values[] = $result['value'];
 				}
 				
-				$searcher = new Searcher();
-				$searcher->addCriterion('id',Criterion::EQUAL,$values);
-				$objects = $subGateway->find($listAnnotation->getObjectClass(), $searcher);
+				if($lazyLoad){
+					$objects = Array();
+					foreach($values as $value){
+						$objects[$value] = call_user_func_array(array($listAnnotation->getObjectClass(),"bindInstance"),array($value,new SQLGateway()));
+					}
+				}else{
+					$searcher = new Searcher();
+					$searcher->addCriterion('id',Criterion::EQUAL,$values);
+					$objects = $subGateway->find($listAnnotation->getObjectClass(), $searcher);
+				}
 			}else if($listAnnotation->isCollection()){
 				$ids = array();
 				
@@ -1276,7 +1287,7 @@
 					$ids[] = $result['id'];
 				}
 				
-				$nestedCollections = $this->loadCollections($listTable."List", $listAnnotation->getContainedType(), $ids);
+				$nestedCollections = $this->loadCollections($listTable."List", $listAnnotation->getContainedType(), $ids. "parentList", $lazyLoad);
 			}
 			
 			foreach($results as $result){
@@ -1294,7 +1305,6 @@
 					if($result['value']){
 						$collections[$result[$parentColumn]][$result['name']] = $objects[$result['value']];
 					}else{
-						$objectClass = $listAnnotation->getObjectClass();
 						$collections[$result[$parentColumn]][$result['name']] = null;
 					}
 				}else if($listAnnotation->isCollection()){

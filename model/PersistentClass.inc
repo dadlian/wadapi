@@ -30,7 +30,7 @@
 		protected $gateway;
 
 		/*
-		 * Boolean flag indicating whether or not this object's data has been completed loaded.
+		 * Boolean flag indicating whether or not this object's data has been completely loaded.
 		 */
 		/** @Boolean(required=true, default=true) */
 		protected $loaded;
@@ -130,8 +130,12 @@
 				return;
 			}
 			
+			//Load object data
+			$searcher = new Searcher();
+			$searcher->addCriterion("id",Criterion::EQUAL,$this->getId());
+			
 			$className = get_class($this);
-			$object = $this->gateway->findUnique($className, 'id', $this->getId());
+			$object = $this->gateway->findUnique($className,$searcher);
 			
 			if(!$object){
 				fatal_error(DATA_ACCESS_ERROR, "Instance of class ".get_class($this)." has an invalid binding ".
@@ -141,12 +145,8 @@
 			
 			$class = Mirror::reflectClass($className);
 			foreach($class->getProperties(false) as $property){
-				$propertyName = capitalise($property->getName());
-				
-				$setMethod = "set$propertyName";
-				$getMethod = "get$propertyName";
-				
-				$this->$setMethod($object->$getMethod());	
+				$propertyName = $property->getName();
+				$this->$propertyName = $object->$propertyName;	
 			}
 			
 			$this->loaded = true;
