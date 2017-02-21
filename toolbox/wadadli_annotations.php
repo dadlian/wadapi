@@ -1,7 +1,4 @@
 <?php	
-	class Belongs extends Annotation{
-	}
-	
 	abstract class WadadliAnnotation extends Annotation{
 		public $required;
 	}

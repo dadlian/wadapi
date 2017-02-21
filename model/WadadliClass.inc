@@ -181,7 +181,7 @@
 				return call_user_func_array(array($this,$method), $arguments);
 			}else{
 				fatal_error(DATA_ACCESS_ERROR, "Call to undefined method {$class->getName()}::$method().");
-			}			
+			}
 		}
 
 		/*

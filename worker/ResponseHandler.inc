@@ -149,7 +149,6 @@
 			if(self::$response->getContentType() == "application/json"){
 				json_encode($payload,JSON_UNESCAPED_SLASHES);
 				if(json_last_error()){
-					var_dump($payload);
 					echo json_last_error_msg();
 					ResponseHandler::error(array("The server was unable to encode the requested data."));
 				}

@@ -15,9 +15,6 @@
 		//The detemined class hierarchy
 		private $classHierarchy = array();
 		
-		//The determined owner class
-		private $ownerClass = false;
-		
 		//Returns this class' parent as a WadadliReflectionClass object
 		public function getParentClass(){
 			$grandparent = parent::getParentClass();
@@ -114,26 +111,6 @@
 			}
 			
 			return $this->classHierarchy;
-		}
-		
-		//Specifies whether this class must always be initialised as a member of an owning class
-		public function hasOwningClass(){			
-			return !is_null($this->getOwningClass());
-		}
-		
-		//Returns the name of the class to which this class must belong
-		public function getOwningClass(){
-			if(is_bool($this->ownerClass)){
-				$this->ownerClass = null;
-				
-				foreach($this->getClassHierarchy() as $class){
-					if($class->hasAnnotation('Belongs')){
-						$this->ownerClass = Mirror::reflectClass($class->getAnnotation('Belongs')->value);
-					}
-				}
-			}
-			
-			return $this->ownerClass;
 		}
 	}
 ?>

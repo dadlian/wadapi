@@ -381,12 +381,12 @@
 			}
 			
 			//Load Child Objects and Collections
-			if($objects){
+			if(!$lazyLoad && $objects){
 				$subGateway = new SQLGateway();
 				$searcher = new Searcher();
 				foreach($reflectedClass->getProperties() as $property){
 					$setter = "set".capitalise($property->getName());
-					if(!$lazyLoad && $property->getAnnotation()->isObject()){
+					if($property->getAnnotation()->isObject()){
 						$containedClass = $property->getAnnotation()->getObjectClass();
 						$reflectedClass = Mirror::reflectClass($containedClass);
 						
@@ -410,7 +410,7 @@
 					}else if($property->getAnnotation()->isCollection()){
 						$collections = $this->loadCollections($className.capitalise($property->getName()),
 											$property->getAnnotation()->getContainedType(),
-											array_keys($objects),strtolower($className),$lazyLoad);
+											array_keys($objects),strtolower($className));
 						
 						foreach($collections as $ownerID => $collection){
 							$objects[$ownerID]->$setter($collection);
@@ -465,7 +465,6 @@
 			if(!is_array($deleteObjects)){
 				$deleteObjects = array($deleteObjects);
 			}
-			
 			
 			$oldObjectMap = array();
 			$oldFileList = array();
@@ -923,15 +922,6 @@
 					$saveQuery .= " WHERE id=?";
 					$saveValues[] = $saveObject->getId();
 				}else{
-					//Check if $saveObject has owning class, and whether owner has been processed
-					if($saveObjectClass->hasOwningClass() && 
-						!in_array($saveObjectClass->getOwningClass()->getName(), $this->classesSeen)){
-						fatal_error(DATA_MODIFY_ERROR, "Object of class ".$saveObjectClass->getName(). 
-								" cannot be saved independently. It must belong to a ".
-								$saveObjectClass->getOwningClass()->getName() . " object.");
-						return;
-					}
-					
 					$saveQueryProperties = "";
 					foreach(array_keys($propertyValueMap) as $property){
 						$saveQueryProperties .= "$property,";
@@ -1048,7 +1038,7 @@
 				$key = (string)$key;
 				if($listAnnotation->isCollection()){
 					if(!in_array($key, $storedListKeys)){
-						DatabaseAdministrator::execute($insertQuery, $key, $parentKey);
+						DatabaseAdministrator::execute($insertQuery, array($key, $parentKey));
 						$lastInsertId = DatabaseAdministrator::getLastInsertId();
 					}else{
 						if($listDepth == 0){
@@ -1057,7 +1047,7 @@
 							$idQuery = "SELECT id FROM $tableName WHERE name=? AND parentList=?";
 						}
 						
-						$currentEntry = DatabaseAdministrator::execute($idQuery, $key, $parentKey);
+						$currentEntry = DatabaseAdministrator::execute($idQuery, array($key, $parentKey));
 						$lastInsertId = $currentEntry[0]['id'];
 					}
 					
@@ -1102,9 +1092,10 @@
 				$getterName = "get".capitalise($propertyName);
 				$propertyValue = $object->$getterName();
 				
-				if($property->getAnnotation()->isCollection() || 
-					(!$propertyValue && !$property->getAnnotation()->isBoolean() &&
-						$property->getAnnotation()->isRequired())){
+				//Skip Array Members and Unspecified Required Values
+				$isArrayMember = $property->getAnnotation()->isCollection();
+				$requiredNotSpecified = !$propertyValue && !$property->getAnnotation()->isBoolean() && $property->getAnnotation()->isRequired();
+				if($isArrayMember || $requiredNotSpecified){
 					continue;
 				}
 				
@@ -1178,7 +1169,7 @@
 				}
 				
 				if($property->getAnnotation()->isCollection()){
-					$arguments[] = array();
+					$arguments[] = null;
 				}else if($property->getAnnotation()->isDate()){
 					$datePieces = preg_split("/[-: ]/", $data[$field]);
 					$newDate = new WadadliDate();
@@ -1249,7 +1240,7 @@
 		 /*
 		  * Delayed loading of object collections to ensure a single query to each table
 		  */
-		 private function loadCollections($listTable, $listAnnotation, $parentIds, $parentColumn = "parentList", $lazyLoad = true){
+		 private function loadCollections($listTable, $listAnnotation, $parentIds, $parentColumn = "parentList"){
 			$collections = array();
 			
 			$fields = "id,$parentColumn,name";
@@ -1270,16 +1261,9 @@
 					$values[] = $result['value'];
 				}
 				
-				if($lazyLoad){
-					$objects = Array();
-					foreach($values as $value){
-						$objects[$value] = call_user_func_array(array($listAnnotation->getObjectClass(),"bindInstance"),array($value,new SQLGateway()));
-					}
-				}else{
-					$searcher = new Searcher();
-					$searcher->addCriterion('id',Criterion::EQUAL,$values);
-					$objects = $subGateway->find($listAnnotation->getObjectClass(), $searcher);
-				}
+				$searcher = new Searcher();
+				$searcher->addCriterion('id',Criterion::EQUAL,$values);
+				$objects = $subGateway->find($listAnnotation->getObjectClass(), $searcher);
 			}else if($listAnnotation->isCollection()){
 				$ids = array();
 				
@@ -1287,7 +1271,7 @@
 					$ids[] = $result['id'];
 				}
 				
-				$nestedCollections = $this->loadCollections($listTable."List", $listAnnotation->getContainedType(), $ids. "parentList", $lazyLoad);
+				$nestedCollections = $this->loadCollections($listTable."List", $listAnnotation->getContainedType(), $ids);
 			}
 			
 			foreach($results as $result){

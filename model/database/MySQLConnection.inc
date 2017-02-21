@@ -107,8 +107,6 @@
 			}
 			
 			if(@!$preparedStatement->execute()){
-				//var_dump($bindString);
-				//var_dump($parameters); exit;
 				fatal_error(DATABASE_EXECUTE_ERROR, $preparedStatement->error.".");
 				return;
 			}

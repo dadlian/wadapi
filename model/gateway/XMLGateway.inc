@@ -329,16 +329,6 @@
 			}
 			
 			$class = Mirror::reflectClass($object);
-			
-			//Check if $object has owning class, and whether owner has been processed
-			$parentNodes = $root->xpath("parent::*");
-			if($class->hasOwningClass() && 
-				strtolower($class->getOwningClass()->getName()) != $parentNodes[0]->getName()){
-				fatal_error(DATA_MODIFY_ERROR, "Object of class ".$class->getName()." cannot be saved independently. It must belong to a ".
-						$class->getOwningClass()->getName() . " object.");
-				return;
-			}
-			
 			foreach($class->getProperties() as $property){
 				$propertyName = $property->getName();
 				$getterMethod = "get".capitalise($propertyName);

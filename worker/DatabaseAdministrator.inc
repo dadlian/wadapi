@@ -43,11 +43,6 @@
 			$statement = self::addPrefixes($statement);
 			$sqlStatementString = new SQLString($statement);
 			
-			//If this is a select query, manage indexes
-			/*if($sqlStatementString->getType() == SQLString::SELECT_STRING){
-				self::manageIndexes($sqlStatementString);
-			}*/
-			
 			//Execute parameterised statement
 			$executeParameters = array_merge(array($statement), $statementParameters);			
 			$result = call_user_func_array(array(self::$activeConnection, "execute"), $executeParameters);
@@ -169,109 +164,6 @@
 			}
 			
 			return self::$tablePrefix;
-		}
-		
-		/*
-		 * Return the index hits value
-		 */
-		private static function getHitsForIndex(){
-			if(is_null(self::$indexHits)){
-				if(SettingsManager::getSetting('Database','Table Prefix')){
-					self::$indexHits = SettingsManager::getSetting('Database','Hits For Index');
-				}else{
-					self::$indexHits = "";
-				}
-			}
-			
-			return self::$indexHits;
-		}
-		
-		/*
-		 * Given a SELECT statement, add indexes on heavily referenced columns
-		 */
-		private static function manageIndexes($sqlStatementString){
-			//Create ColumnHits table if not already created
-			if(!self::tableExists("ColumnHits")){
-				$createColumnHitQuery = self::addPrefixes("CREATE TABLE ColumnHits(
-								tableName VARCHAR(256) NOT NULL,
-								columnName VARCHAR(256) NOT NULL,
-								hits INT NOT NULL DEFAULT 0,
-								indexed BOOL NOT NULL DEFAULT 0,
-								PRIMARY KEY (tableName, columnName)
-							)ENGINE=INNODB;");			
-				self::$activeConnection->execute($createColumnHitQuery);
-			}
-			
-			//Find Statement table(s) and column(s)
-			$statementTables = $sqlStatementString->getTables();
-			$statementColumns = $sqlStatementString->getColumns();
-					
-			//Get list of columns for each table in the statement
-			$tableColumns = array();
-			$keyColumns = array();
-			
-			foreach($statementTables as $table => $alias){
-				$tableColumns[$table] = array();
-				$columnRows = self::$activeConnection->execute("SHOW COLUMNS FROM $table");
-				foreach($columnRows as $columnRow){
-					$tableColumns[$table][] = $columnRow['Field'];
-					if($columnRow['Key'] == "PRI" || $columnRow['Key'] == "MUL" || $columnRow['Type'] == "text"){
-						$keyColumns[] = $columnRow['Field'];
-					}
-				}
-			}
-			
-			//Get hits for the particular column/table
-			$hitSelectQuery = self::addPrefixes("SELECT hits,indexed,tableName,columnName FROM ColumnHits");
-			$hitsResult = array();
-			foreach(self::$activeConnection->execute($hitSelectQuery) as $result){
-				$hitsResult["{$result['tableName']}:{$result['columnName']}"] = $result['hits'];
-			}
-			
-			//Find out which table a column belongs to and update the ColumnHits table
-			$columnTable = "";			
-			foreach($statementColumns as $column => $columnTableAlias){
-				$columnPieces = preg_split("/\./", $column);
-				$column = $columnPieces[sizeof($columnPieces)-1];
-				
-				foreach($statementTables as $table => $alias){
-					if(($alias && $columnTableAlias == $alias) || (!$alias && in_array($column, $tableColumns[$table]))){
-						$columnTable = $table;
-					}
-				}
-				
-				$newEntry = true;
-				$hits = 0;
-				
-				if(in_array($column, $keyColumns)){
-					$indexed = true;
-				}else{
-					$indexed = false;
-				}
-				
-				if(array_key_exists("$columnTable:$column",$hitsResult)){
-					$newEntry = false;
-					$hits = $hitsResult["$columnTable:$column"];
-				}
-				
-				//Check if the new hits total requires us to add an index
-				$hits+=1;
-				
-				if(!$indexed && $hits > self::getHitsForIndex()){
-					$indexed = true;
-					$indexQuery = "CREATE INDEX {$column}_index ON $columnTable ($column)";
-					self::$activeConnection->execute($indexQuery);
-				}
-				
-				//Update the hit count and indexed status in the ColumnHits table
-				if($newEntry){
-					$hitUpdateQuery = self::addPrefixes("INSERT INTO ColumnHits VALUES(?,?,?,?)");
-					self::$activeConnection->execute($hitUpdateQuery, "$columnTable", $column, $hits, $indexed);
-				}else{
-					$hitUpdateQuery = self::addPrefixes("UPDATE ColumnHits SET hits=?, indexed=? WHERE tableName=? AND columnName=?");
-					$preparedStatement = self::$activeConnection->execute($hitUpdateQuery, $hits, $indexed, "$columnTable", $column);
-				}
-			}
 		}
 	}
 ?>

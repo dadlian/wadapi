@@ -79,6 +79,15 @@
 				$this->loadData();
 			}
 			
+			if(Mirror::reflectProperty($this,$searchProperty)->getAnnotation()->isCollection() && is_null($this->$searchProperty)){
+				$this->$searchProperty = $this->loadCollections(
+					Mirror::reflectProperty($this,$searchProperty)->getAnnotation()->getContainedType(), //ListAnnotation
+					get_class($this).capitalise($searchProperty), //ListTable
+					array($this->getId()), //Current Object ID
+					strtolower(get_class($this)) //ParentTable
+				)[$this->getId()];
+			}
+			
 		 	return parent::getX($searchProperty);
 		 }
 		
@@ -86,7 +95,7 @@
 		 * Overridden setX method to update last modified time
 		 */
 		 protected function setX($propertyName, $newValue, $calledMethod){
-			$oldValue = $this->getX($propertyName);
+			$oldValue = $this->$propertyName;
 			if($oldValue && $newValue != $oldValue){
 				$this->modified = strval(time());
 			}
@@ -151,5 +160,60 @@
 			
 			$this->loaded = true;
 		}
+		
+		private function loadCollections($listAnnotation, $listTable, $parentIds, $parentColumn = "parentList"){
+			$collections = array();
+			
+			$fields = "id,$parentColumn,name";
+			if(!$listAnnotation->isCollection()){
+				$fields .= ",value";
+			}
+			
+			$results = array();
+			if(DatabaseAdministrator::tableExists($listTable) && $parentIds){
+				$results = DatabaseAdministrator::execute("SELECT $fields FROM $listTable WHERE $parentColumn IN (".implode(",",$parentIds).")");
+			}
+			
+			if($listAnnotation->isCollection()){
+				$ids = array();
+				
+				foreach($results as $result){
+					$ids[] = $result['id'];
+				}
+				
+				$nestedCollections = $this->loadCollections($listTable."List", $listAnnotation->getContainedType(), $ids);
+			}
+			
+			foreach($results as $result){
+				if(!array_key_exists($result[$parentColumn], $collections)){
+					$collections[$result[$parentColumn]] = array();
+				}
+				
+				if($listAnnotation->isDate()){
+					$datePieces = preg_split("/[-: ]/", $result['value']);
+					$value = new WadadliDate(intval($datePieces[0]),intval($datePieces[1]),intval($datePieces[2]),
+										intval($datePieces[3]),intval($datePieces[4]),intval($datePieces[5]));
+					$collections[$result[$parentColumn]][$result['name']] = $value;
+				}else if($listAnnotation->isObject()){
+					if($result['value']){
+						//Set object stub for lazy loading
+						$containedClass = $listAnnotation->getObjectClass();
+						$collections[$result[$parentColumn]][$result['name']] = call_user_func_array(array($containedClass,"bindInstance"),array($result['value'],new SQLGateway()));
+					}else{
+						$collections[$result[$parentColumn]][$result['name']] = null;
+					}
+				}else if($listAnnotation->isCollection()){
+					if(array_key_exists($result['id'], $nestedCollections)){
+						$collections[$result[$parentColumn]][$result['name']] = $nestedCollections[$result['id']];
+					}else{
+						$collections[$result[$parentColumn]][$result['name']] = array();
+					}
+				}else{
+					$collections[$result[$parentColumn]][$result['name']] = $listAnnotation->isBoolean()?boolval($result['value']):$result['value'];
+				}
+			}
+			
+			return $collections;
+		 }
 	}
 ?>
