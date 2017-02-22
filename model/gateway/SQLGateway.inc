@@ -891,52 +891,35 @@
 			//Remove parents of PersistentClass from hierarchy
 			$persistentClass = Mirror::reflectClass("PersistentClass");
 			$classHierarchy = array_diff($classHierarchy, $persistentClass->getClassHierarchy());
-		
-			//Load Class to Property Map
-			$propertyMap = array();
 			
-			foreach($classHierarchy as $class){
-				//Every class should include an ID field for linking to parent
-				$propertyMap[$class->getName()] = array_merge(array(Mirror::reflectProperty($class->getName(), "id"),
-											Mirror::reflectProperty($class->getName(), "created"),
-											Mirror::reflectProperty($class->getName(), "modified")),
-										$class->getProperties(false));		
-			}
-				
-			//Check whether object already exists;
-			$objectArray = DatabaseAdministrator::execute("SELECT id FROM ".get_class($saveObject)." WHERE id=".$saveObject->getId());
-			$objectExists = (sizeof($objectArray) > 0);
-							
 			//Write each class component of the saveObject's hierarchy to the corresponding database table
-			foreach($propertyMap as $class => $propertyList){
-				$propertyValueMap = $this->buildPropertyValueMap($propertyList, $saveObject);
-				$saveValues = array();
+			foreach($classHierarchy as $class){
+				$propertyValueMap = $this->buildPropertyValueMap($class->getProperties(false), $saveObject);
 				
-				if($objectExists){
-					$saveQuery = "UPDATE $class SET ";
-					foreach($propertyValueMap as $property => $value){
-						$saveQuery .= "$property=?,";
-						$saveValues[] = $value;
-					}
-					$saveQuery = substr($saveQuery, 0, strlen($saveQuery) - 1);
-					$saveQuery .= " WHERE id=?";
-					$saveValues[] = $saveObject->getId();
-				}else{
-					$saveQueryProperties = "";
-					foreach(array_keys($propertyValueMap) as $property){
-						$saveQueryProperties .= "$property,";
-					}
-					$saveQueryProperties = substr($saveQueryProperties, 0, strlen($saveQueryProperties) - 1);
-					
-					$saveQueryParameters = "";
-					foreach($propertyValueMap as $value){
-						$saveQueryParameters .= "?,";
-						$saveValues[] = $value;
-					}
-					$saveQueryParameters = substr($saveQueryParameters, 0, strlen($saveQueryParameters) - 1);
-					
-					$saveQuery = "INSERT INTO $class($saveQueryProperties) VALUES($saveQueryParameters)";
+				$saveValues = array();
+				$classProperties = implode(",",array_keys($propertyValueMap));
+				
+				//Setup Insert Part of Query
+				$insertParameters = implode(",",array_fill(0,sizeof($propertyValueMap),"?"));
+				$insertValues = array_merge(
+							array($saveObject->getId(),$saveObject->getCreated(),$saveObject->getModified()),
+							array_values($propertyValueMap)
+						);
+				
+				//Setup Update Part of Query
+				$updateParameters = array();
+				$updateValues = array($saveObject->getModified());
+				foreach($propertyValueMap as $property => $value){
+					$updateParameters[] = "$property=?";
+					$updateValues[] = $value;
 				}
+				
+				//Setup Prepared Statement Values
+				$saveValues = array_merge($insertValues,$updateValues);
+				
+				//Build Save Query
+				$saveQuery = "INSERT INTO {$class->getName()}(id,created,modified,$classProperties) VALUES(?,?,?,$insertParameters) ".
+						"ON DUPLICATE KEY UPDATE modified=?,".implode(",",$updateParameters);
 				
 				//Execute the save query and pass in the extracted parameters
 				call_user_func_array(array("DatabaseAdministrator","execute"), array_merge(array($saveQuery), $saveValues));

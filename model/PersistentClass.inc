@@ -6,6 +6,11 @@
 		private static $dispensedIDs = array();
 		
 		/*
+		 * Records whether or not object members have been written to
+		 */
+		private static $dirtyBits = array();
+		
+		/*
 		 * A unique integer identifying this object from other instances of the same class.
 		 */
 		/** @WadapiString(required=true, min=0, max=20)*/
@@ -45,6 +50,13 @@
 			//Add default gateway and loaded values to constructor arguments
 			$arguments = array_merge(array(self::generateID(), strval(time()), strval(time()), null, true), $arguments);
 			call_user_func_array(array('parent','__construct'), $arguments);
+			
+			//Initialise Dirty Bits
+			foreach(Mirror::reflectClass(get_class($this))->getProperties(false) as $property){
+				if(!in_array($property,array('id','created','modified'))){
+					$this->dirtyBits[$property->getName()] = false;
+				}
+			}
 			
 			QuarterMaster::store($this);
 		}
@@ -96,8 +108,12 @@
 		 */
 		 protected function setX($propertyName, $newValue, $calledMethod){
 			$oldValue = $this->$propertyName;
-			if($oldValue && $newValue != $oldValue){
+			if(!is_null($oldValue) && $newValue != $oldValue){
 				$this->modified = strval(time());
+				
+				if(array_key_exists($propertyName,$this->dirtyBits)){
+					$this->dirtyBits[$propertyName] = true;
+				}
 			}
 			
 			if(!$this->modified){
@@ -116,6 +132,62 @@
 			return new WadadliDate(intval(date('Y',$createTime)),intval(date('m',$createTime)),intval(date('d',$createTime)),
 						intval(date('G',$createTime)),intval(date('i',$createTime)),intval(date('s',$createTime)));
 		 }
+		 
+		 /*
+		  * Returns true if the specified field has been modified, false otherwise, If no field is specified, the function
+		  * returns true if aby of the object's fields have been modified, and false otherwise
+		  */
+		  protected function isDirty($field=""){
+			$class = Mirror::reflectClass($this);
+			if($field && !$class->hasProperty($field)){
+				fatal_error(DATA_ACCESS_ERROR,"Can't determine dirty status on non-existant field '$field'");
+			}
+			
+			if($field){
+				$property = Mirror::reflectProperty($this,$field)->getAnnotation();
+				if($property->isObject()){
+					return $this->dirtyBits[$field] || $this->$field->isDirty();
+				}else if($property->isCollection()){
+					$leaves = $this->field;
+					if(is_null($leaves)){
+						return false;
+					}
+					
+					$containedType = $property->getContainedType();
+					while($containedType->isCollection()){
+						$newLeaves = array();
+						foreach($leaves as $leaf){
+							foreach($leaf as $element){
+								$newLeaves[] = $element;
+							}
+						}
+						
+						$containedType = $containedType->getContainedType();
+						$leaves = $newLeaves;
+					}
+					
+					if($containedType->isObject()){
+						foreach($leaves as $leaf){
+							if($leaf->isDirty()){
+								return true;
+							}
+						}
+					}
+					
+					return $this->dirtyBits[$field];
+				}else{
+					return $this->dirtyBits[$field];
+				}
+			}else{
+				foreach($this->dirtyBits as $field => $dirtyBit){
+					if($this->isDirty($field)){
+						return true;
+					}
+				}
+				
+				return false;
+			}
+		  }
 		 
 		 /*
 		  * Generates a unique ID number for the current object based on the current Unix timestamp
