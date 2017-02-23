@@ -9,10 +9,10 @@
 		 * If a $field is specified only this field will be added/replaced to the snapshot
 		 */
 		protected static function takeSnapshot($object,$field = ""){
-			//Verify that the argument $className is a WadadliClass
+			//Verify that the argument $object is a PersistentClass
 			$class = Mirror::reflectClass($object);
-			if(!$class->descendsFrom('WadadliClass')){
-				warning(UNEXPECTED_ARGUMENT_WARNING, "Photographer can only take snapshots of WadadliClass objects.");
+			if(!$class->descendsFrom('PersistentClass')){
+				warning(UNEXPECTED_ARGUMENT_WARNING, "Photographer can only take snapshots of PersistentClass objects.");
 				return;
 			}
 			
@@ -46,15 +46,42 @@
 		}
 		
 		/*
+		 * Returns the snapshot taken for the specified $object. If a $field is specified, only the snapshot fragment for that field will be returned.
+		 */
+		 protected static function getSnapshot($object,$field=""){
+			//Verify that the argument $object is a PersistentClass
+			$class = Mirror::reflectClass($object);
+			if(!$class->descendsFrom('PersistentClass')){
+				warning(UNEXPECTED_ARGUMENT_WARNING, "Photographer only stores snapshots of PersistentClass objects.");
+				return;
+			}
+			
+			if(!array_key_exists($object->getId(),self::$gallery)){
+				return null;
+			}
+			
+			$snapshot = self::$gallery[$object->getId()];
+			if($field){
+				if(!array_key_exists($field,$snapshot)){
+					return null;
+				}else{
+					return $snapshot[$field];
+				}
+			}else{
+				return $snapshot;
+			}
+		 }
+		 
+		/*
 		 * Compares the passed $object to this object's snapshot if it exists. If a $field is specified, only this value will be compared.
 		 * Otherwise all of the object's fields will be compared to the snapshot. Returns true if the object matches its snapshot.
 		 * False otherwise. If a snapshot does not exist, the function returns false.
 		 */
 		protected static function compareToSnapshot($object,$field=""){
-			//Verify that the argument $className is a WadadliClass
+			//Verify that the argument $className is a PersistentClass
 			$class = Mirror::reflectClass($object);
-			if(!$class->descendsFrom('WadadliClass')){
-				warning(UNEXPECTED_ARGUMENT_WARNING, "Photographer can only take snapshots of WadadliClass objects.");
+			if(!$class->descendsFrom('PersistentClass')){
+				warning(UNEXPECTED_ARGUMENT_WARNING, "Photographer can only take snapshots of PersistentClass objects.");
 				return;
 			}
 			
@@ -116,6 +143,10 @@
 		//Helper method to compare collections
 		private static function compareCollectionToSnapshot($listType,$collection,$snapshot){
 			if(is_null($snapshot)){
+				return false;
+			}
+			
+			if(sizeof($collection) !== sizeof($snapshot)){
 				return false;
 			}
 			

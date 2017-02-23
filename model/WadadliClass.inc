@@ -303,12 +303,7 @@
 				$tempArray = array();	
 				$getter = "get".capitalise($propertyName);
 				
-				if($this->$getter()){
-					$elements = $this->$getter();
-				}else{
-					$elements = array();
-				}
-					
+				$elements = $this->$getter();
 				foreach($elements as $key => $element){
 					$match = false;
 					$property = Mirror::reflectProperty(get_class($this), $propertyName);

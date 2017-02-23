@@ -37,6 +37,7 @@
 	require_once(dirname(__FILE__)."/model/reflection/Mirror.inc");
 	
 	require_once(dirname(__FILE__)."/worker/Worker.inc");
+	require_once(dirname(__FILE__)."/worker/Curator.inc");
 	require_once(dirname(__FILE__)."/worker/CryptKeeper.inc");
 	require_once(dirname(__FILE__)."/worker/DatabaseAdministrator.inc");
 	require_once(dirname(__FILE__)."/worker/Detective.inc");

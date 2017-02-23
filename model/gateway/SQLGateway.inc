@@ -1,11 +1,5 @@
 <?php
-	class SQLGateway extends Gateway{		
-		//Keep track of classes processed this session so we don't revisit them
-		private $classesSeen;
-				
-		//An array of all list properties seen for table creation
-		private $listProperties;
-		
+	class SQLGateway extends Gateway{
 		//A map of loaded class object members for delayed loading
 		private $objectMembers;
 		
@@ -178,7 +172,7 @@
 						
 						$listCondition = "";
 						for($i=sizeof($listTables)-1; $i >= 0; $i--){
-							$parentColumn = "parentList";
+							$parentColumn = "parentKey";
 							if($i == 0){
 								$parentColumn = decapitalise($className);
 							}
@@ -450,18 +444,6 @@
 					return;
 				}
 				
-				//Re-initialise seen class hierarchy for this object
-				$this->classesSeen = array();
-				$this->listProperties = array();
-
-				//Manage table hierarchy for object class
-				$this->manageTableForClass(Mirror::reflectClass($saveObject));
-				
-				while(sizeof($this->listProperties) > 0){
-					$listProperty = array_shift($this->listProperties);
-					$this->manageTableForList($listProperty);
-				}
-				
 				//Save object data to table hierarchy
 				$this->writeObject($saveObject);
 			}
@@ -522,372 +504,6 @@
 		}
 		
 		/*
-		 * Ensures that a table representation of an object already exists, and decides how to proceed.
-		 */
-		private function manageTableForClass($class){
-			if(!in_array($class->getName(), $this->classesSeen)){
-				$this->classesSeen[] = $class->getName();
-				if(DatabaseAdministrator::tableExists($class->getName())){
-					//Add any new class fields, or change field types for existing table
-					$this->alterTableForClass($class);
-				}else{
-					$this->createTableForClass($class);
-				}
-			}
-		}
-		
-		/*
-		 * Checks whether a table representation of the list already exists, and decides how to proceed based on the result.
-		 */
-		private function manageTableForList($property){
-			$class = $property->getDeclaringClass();
-			
-			if(!in_array($class->getName().capitalise($property->getName()), $this->classesSeen)){
-				$this->classesSeen[] = $class->getName().capitalise($property->getName());
-				if(DatabaseAdministrator::tableExists($class->getName().capitalise($property->getName()))){
-					$this->alterTableForList($property);
-				}else{
-					$this->createTableForList($property);
-				}
-			}
-		}
-			 
-		/*
-		 * Creates a database table corresponding to a certain PersistentClass if it does not already exist
-		 */
-		private function createTableForClass($class){
-			//Every class will need to include an ID field to associate with its parent
-			$classProperties = array(Mirror::reflectProperty($class->getName(), "id"),Mirror::reflectProperty($class->getName(), "created"),Mirror::reflectProperty($class->getName(), "modified"));
-			$classProperties = array_merge($classProperties, $class->getProperties(false));
-			
-			//Check that necessary parent table exist. Create them if not
-			$classHierarchy = $class->getParentClass()->getClassHierarchy();
-			$persistentClass = Mirror::reflectClass("PersistentClass");
-			$classHierarchy = array_diff($classHierarchy, $persistentClass->getClassHierarchy());
-					
-			foreach($classHierarchy as $nextClass){
-				$this->manageTableForClass($nextClass);
-			}
-						
-			$createStatement = "CREATE TABLE {$class->getName()}(";
-			$idType = "";
-			
-			foreach($classProperties as $property){
-				if($property->getAnnotation()->isCollection()){
-					continue;
-				}
-				
-				$columnType = "";
-				$propertyName = $property->getName();
-				$columnType = $this->getColumnType($property->getAnnotation());
-				
-				//Create object field table
-				if($property->getAnnotation()->isObject()){
-					$this->manageTableForClass(Mirror::reflectClass($property->getAnnotation()->getObjectClass()));
-				}
-				
-				if($property->getName() == "id"){
-					$idType = $columnType;
-					$columnType .= " PRIMARY KEY";
-				}				
-				
-				$createStatement .= "{$property->getName()} $columnType,";
-			}
-			
-			//If class is not hierarchy root, add foreign key to parent object
-			if($class->getParentClass()->getName() != "PersistentClass"){
-				$parentClassName = $class->getParentClass()->getName();
-				$constraintName = "fk_".SettingsManager::getSetting("database","tableprefix")."_".substr(strtolower($class->getName()), 0, 25)."_id";
-				$createStatement .= "CONSTRAINT $constraintName FOREIGN KEY (id) 
-							REFERENCES $parentClassName (id) ON DELETE CASCADE ON UPDATE CASCADE,";
-			}
-			
-			//Add foreign keys for object references
-			foreach($classProperties as $property){
-				if($property->getAnnotation()->isObject()){
-					$propertyName = $property->getName();
-					$objectTable = $property->getAnnotation()->getObjectClass();
-					$constraintName = "fk_".SettingsManager::getSetting("database","tableprefix")."_".substr(strtolower($class->getName()),0,25).substr("_$propertyName",0,20);
-					$createStatement .= "CONSTRAINT $constraintName FOREIGN KEY ($propertyName) REFERENCES $objectTable (id) 
-								ON DELETE SET NULL ON UPDATE CASCADE,";
-				}
-			}
-			
-			//Remove trailing comma from $createStatement
-			$createStatement = substr($createStatement, 0, strlen($createStatement) - 1);
-			$createStatement .= ")ENGINE=INNODB";
-			DatabaseAdministrator::execute($createStatement);
-			
-			//Mark list property for later table creation
-			foreach($classProperties as $property){
-				if($property->getAnnotation()->isCollection()){
-					$this->listProperties[] = $property;
-				}
-			}
-		}
-			 
-		/*
-		 * Creates a database table corresponding to stored object lists when a class has a one-to-many or many-to-many relationship
-		 */
-		private function createTableForList($property){
-			$propertyName = $property->getName();
-			$className = $property->getDeclaringClass()->getName();
-			$annotation = $property->getAnnotation();
-			$listAnnotations = array();
-			
-			//Get a listing of all the nested types of the Collection property
-			while($annotation->isCollection()){
-				$annotation = $annotation->getContainedType();
-				$listAnnotations[] = $annotation;
-			}
-			
-			//Traverse type list to create tables for each nested list
-			for($i = 0; $i < sizeof($listAnnotations); $i++){
-				$nextAnnotation = $listAnnotations[$i];
-				$tableName = $className.capitalise($propertyName).str_repeat("List", $i);
-				if(DatabaseAdministrator::tableExists($tableName)){
-					continue;
-				}
-				
-				$createStatement = "CREATE TABLE $tableName(id INT AUTO_INCREMENT PRIMARY KEY,";
-				if($i > 0){
-					$createStatement .= "parentList INT NOT NULL,";
-				}else{
-					$createStatement .= strtolower($className)." VARCHAR(20) NOT NULL,";
-				}
-				
-				$createStatement .= "name VARCHAR(128),";
-				
-				if($nextAnnotation->isObject()){
-					$objectClass = Mirror::reflectClass($nextAnnotation->getObjectClass());
-					$this->manageTableForClass($objectClass);
-					
-					$constraintName = "fk_".SettingsManager::getSetting("database","tableprefix")."_".substr(strtolower($tableName),0,25)."_value";
-					$createStatement .= "value VARCHAR(20),CONSTRAINT $constraintName
-								FOREIGN KEY (value) REFERENCES {$objectClass->getName()} (id) 
-								ON UPDATE CASCADE ON DELETE CASCADE,";
-				}else if(!$nextAnnotation->isCollection()){
-					$columnType = $this->getColumnType($nextAnnotation);
-					$createStatement .= "value $columnType,";
-				}
-				
-				$tableAbbr = substr(strtolower($tableName), 0, 15).substr(strtolower($tableName), strlen($tableName)-10,strlen($tableName));
-				if($i > 0){
-					$constraintName = "fk_".SettingsManager::getSetting("database","tableprefix")."_".$tableAbbr."_parentlist";
-					$createStatement .= "CONSTRAINT $constraintName FOREIGN KEY (parentList) REFERENCES ".
-							     substr($tableName, 0, strlen($tableName) - 4).
-							     " (id) ON UPDATE CASCADE ON DELETE CASCADE)ENGINE=INNODB";
-				}else{
-					$constraintName = "fk_".SettingsManager::getSetting("database","tableprefix")."_".$tableAbbr."_".substr(strtolower($className),0,20);
-					$createStatement .= "CONSTRAINT $constraintName FOREIGN KEY (".strtolower($className).") REFERENCES $className (id)".
-							     " ON UPDATE CASCADE ON DELETE CASCADE)ENGINE=INNODB";
-				}
-				
-				DatabaseAdministrator::execute($createStatement);
-			}
-		}
-		
-		/*
-		 * Change a database table to reflect new class definitions.
-		 */
-		private function alterTableForClass($class){
-			//Get table description
-			$tableName = $class->getName();
-			$tableDescription = DatabaseAdministrator::execute("DESC $tableName");
-			$classProperties = $class->getProperties(false);
-			$tableFieldTypeMap = array();
-			$tableForeignKeyMap = array();
-			
-			//Check that necessary parent tables exist. Create them if not
-			$classHierarchy = $class->getParentClass()->getClassHierarchy();
-			$persistentClass = Mirror::reflectClass("PersistentClass");
-			$classHierarchy = array_diff($classHierarchy, $persistentClass->getClassHierarchy());
-					
-			foreach($classHierarchy as $nextClass){
-				$this->manageTableForClass($nextClass);	
-			}
-			
-			foreach($tableDescription as $column){
-				$tableFieldTypeMap[$column['Field']] = $column['Type'];
-				$tableForeignKeyMap[$column['Field']] = $column['Key'];
-			}
-			
-			foreach($classProperties as $property){
-				$changed = true;
-				$propertyName = $property->getName();
-				
-				if(in_array($property->getName(), array_keys($tableFieldTypeMap))){
-					$oldColumnType = $tableFieldTypeMap[$property->getName()];
-					$oldColumnKey = $tableForeignKeyMap[$property->getName()];
-				}else{
-					$oldColumnType = "";
-					$oldColumnKey = "";
-				}
-				
-				$newColumnType = $this->getColumnType($property->getAnnotation());
-				
-				//Create object field table
-				if($property->getAnnotation()->isObject()){
-					$this->manageTableForClass(Mirror::reflectClass($property->getAnnotation()->getObjectClass()));
-				}
-				
-				//Add any missing columns to table
-				if(!$oldColumnType && !$property->getAnnotation()->isCollection()){
-					$oldColumnType = $newColumnType;
-					DatabaseAdministrator::execute("ALTER TABLE $tableName ADD $propertyName $newColumnType");
-				
-				//Alter table if a field type has changed
-				}else if(($property->getAnnotation()->isObject() && (!preg_match("/^varchar/", $oldColumnType) 
-						|| $oldColumnKey != "MUL")) ||
-					($property->getAnnotation()->isInteger() && (!preg_match("/^int/", $oldColumnType) 
-						|| $oldColumnKey == "MUL")) || 
-					(($property->getAnnotation()->isFloat() || $property->getAnnotation()->isMonetary()) 
-						&& $oldColumnType != "float") || 
-					($property->getAnnotation()->isBoolean() && !preg_match("/tinyint/", $oldColumnType)) || 
-					($property->getAnnotation()->isDate() && $oldColumnType != "datetime") ||
-					($property->getAnnotation()->isText() && $oldColumnType != "text") ||
-					($property->getAnnotation()->isString() && !$property->getAnnotation()->isText() && 
-						$property->getAnnotation()->getMax() &&
-						!preg_match("/^varchar\({$property->getAnnotation()->getMax()}/", $oldColumnType)) ||
-					($property->getAnnotation()->isString() && !$property->getAnnotation()->isText() && 
-						!$property->getAnnotation()->getMax() && !preg_match("/^varchar\(256/", $oldColumnType))){
-					
-					//Set all values in changed column to NULL to ensure compatability with new type
-					DatabaseAdministrator::execute("UPDATE $tableName SET $propertyName=NULL");
-					
-					//If column was previously object and no longer is, drop foreign key
-					if($oldColumnKey == "MUL" && !$property->getAnnotation()->isObject()){
-						$columnKey = "fk_".SettingsManager::getSetting("database","tableprefix")."_".substr(strtolower($tableName),0,25).substr("_$propertyName",0,20);
-						DatabaseAdministrator::execute("ALTER TABLE $tableName DROP FOREIGN KEY $columnKey");
-						DatabaseAdministrator::execute("ALTER TABLE $tableName DROP KEY $columnKey");
-					}
-					
-					DatabaseAdministrator::execute("ALTER TABLE $tableName CHANGE $propertyName $propertyName $newColumnType");
-					
-				//Otherwise table has not changed				
-				}else{
-					$changed = false;
-				}
-					
-				//If column has changed to object add foreign key
-				if($changed && $property->getAnnotation()->isObject()){
-					$columnKey = "fk_".SettingsManager::getSetting("database","tableprefix")."_".substr(strtolower($tableName),0,25).substr("_$propertyName",0,20);
-					$objectTable = $property->getAnnotation()->getObjectClass();
-					DatabaseAdministrator::execute("ALTER TABLE $tableName ADD CONSTRAINT $columnKey 
-									FOREIGN KEY ($propertyName) REFERENCES $objectTable (id) 
-									ON DELETE SET NULL ON UPDATE CASCADE");
-				}
-			}
-			
-			//Mark list property for later table creation
-			foreach($classProperties as $property){
-				if($property->getAnnotation()->isCollection()){
-					$this->listProperties[] = $property;
-				}
-			}
-		}
-		
-		/*
-		 * Change a list database table to reflect new class definitions.
-		 */
-		private function alterTableForList($property){
-			$propertyName = $property->getName();
-			$className = $property->getDeclaringClass()->getName();
-			$annotation = $property->getAnnotation();
-			$listAnnotations = array();
-			
-			//Get a listing of all the nested types of the Collection property
-			while($annotation->isCollection()){
-				$annotation = $annotation->getContainedType();
-				$listAnnotations[] = $annotation;
-			}
-			
-			//Traverse type list in order to alter tables for each nested list
-			for($i = 0; $i < sizeof($listAnnotations); $i++){
-				$nextAnnotation = $listAnnotations[$i];
-				$tableName = $className.capitalise($propertyName).str_repeat("List", $i);
-				$columnName = $propertyName;
-				
-				if(!DatabaseAdministrator::tableExists($tableName)){
-					$this->createTableForList($property);
-				}else{
-					$tableDescription = DatabaseAdministrator::execute("DESC $tableName");
-					$dataIndex = sizeof($tableDescription) - 1;
-					
-					$storedPropertyName = $tableDescription[$dataIndex]['Field'];
-					$storedAnnotationType = $tableDescription[$dataIndex]['Type'];
-					$storedKey = $tableDescription[$dataIndex]['Key'];
-					
-					$newColumnType = $this->getColumnType($nextAnnotation);
-					if($nextAnnotation->isObject()){
-						$this->manageTableForClass(Mirror::reflectClass($nextAnnotation->getObjectClass()));
-					}
-					
-					$typeChange = false;
-					if(($nextAnnotation->isObject() && (!preg_match("/^varchar/", $storedAnnotationType) || $storedKey != "MUL"))||
-					   ($nextAnnotation->isInteger() && (!preg_match("/^int/", $storedAnnotationType) || $storedKey == "MUL"))||
-					   (($nextAnnotation->isFloat() || $nextAnnotation->isMonetary()) && $storedAnnotationType != "float") || 
-					   ($nextAnnotation->isBoolean() && !preg_match("/tinyint/", $storedAnnotationType)) || 
-					   ($nextAnnotation->isDate() && $storedAnnotationType != "datetime") ||
-					   ($nextAnnotation->isText() && $storedAnnotationType != "text") ||
-					   ($nextAnnotation->isString() && !$nextAnnotation->isText() &&  $nextAnnotation->getMax() 
-						&& !preg_match("/^varchar\({$nextAnnotation->getMax()}/", $storedAnnotationType)) ||
-					   ($nextAnnotation->isString() && !$nextAnnotation->isText() && !$nextAnnotation->getMax() 
-						&& !preg_match("/^varchar\(256/", $storedAnnotationType))){
-						$typeChange = true;
-					}
-					
-					//If property recently changed from collection add element column
-					if(sizeof($tableDescription) == 3 && !$nextAnnotation->isCollection()){
-						if($nextAnnotation->isObject()){
-							$fieldName = strtolower($nextAnnotation->getObjectClass());
-						}else{
-							$fieldName = "value";
-						}
-						
-						DatabaseAdministrator::execute("ALTER TABLE $tableName ADD COLUMN $fieldName $newColumnType DEFAULT NULL");						
-					//If list type has become collection, drop element column
-					}else if($nextAnnotation->isCollection() && sizeof($tableDescription) > 3){
-						DatabaseAdministrator::execute("ALTER TABLE $tableName DROP COLUMN ".$tableDescription[3]['Field']);
-					}
-					
-					
-					$tableAbbr = substr(strtolower($tableName),0,15).substr(strtolower($tableName),strlen($tableName)-10,strlen($tableName));
-					if($typeChange){
-						//Set all values of old column to NULL to ensure compatability with new type
-						DatabaseAdministrator::execute("UPDATE $tableName SET value=NULL");
-						
-						//If there is a key on the changed column drop it
-						if($storedKey == "MUL"){
-							$columnKey = "fk_".SettingsManager::getSetting("database","tableprefix")."_".$tableAbbr."_value";
-							DatabaseAdministrator::execute("ALTER TABLE $tableName 
-												DROP FOREIGN KEY $columnKey");
-							DatabaseAdministrator::execute("ALTER TABLE $tableName DROP KEY $columnKey");	
-						}
-							
-						if(sizeof($tableDescription) > 3){
-							DatabaseAdministrator::execute("ALTER TABLE $tableName CHANGE value value $newColumnType");
-						}
-						
-						//If new column is object or collection add Foreign Key to class table
-						if($nextAnnotation->isObject()){
-							$columnKey = "fk_".SettingsManager::getSetting("database","tableprefix")."_{$tableAbbr}_value";
-							if($nextAnnotation->isObject()){;
-								$this->manageTableForClass(Mirror::reflectClass($nextAnnotation->getObjectClass()));
-								$foreignKeyTable = $nextAnnotation->getObjectClass();
-							}
-							
-							DatabaseAdministrator::execute("ALTER TABLE $tableName ADD CONSTRAINT $columnKey 
-												FOREIGN KEY(value)
-												REFERENCES $foreignKeyTable(id)
-												ON DELETE CASCADE ON UPDATE CASCADE");
-						}
-					}
-				}
-			}
-		}
-		
-		/*
 		 * Performs the SQL Query to either insert or update an object to the database
 		 */
 		 public function writeObject($saveObject){
@@ -939,7 +555,7 @@
 				
 				//Save the object's collection properties
 				foreach($propertyList as $property){
-					if($property->getAnnotation()->isCollection()){
+					if($property->getAnnotation()->isCollection() && $saveObject->isDirty($property->getName())){
 						$getterName = "get".capitalise($property->getName());
 						$this->writeList($saveObject, $property, $saveObject->$getterName());
 					}
@@ -950,131 +566,104 @@
 		/*
 		 * Given an object and a specified list property, saves the value of the property to the database
 		 */
-		private function writeList($saveObject, $saveProperty, $propertyValue, $listDepth = 0, $parentListId = 0){
+		private function writeList($saveObject, $saveProperty, $propertyValue, $listDepth = 0, $parentKey = 0){
 			if(!$propertyValue){
 				$propertyValue = array();
 			}
 			
+			$listAnnotation = $saveProperty->getAnnotation()->getContainedType();
 			$saveObjectClass = get_class($saveObject);
 			$propertyName = $saveProperty->getName();
 			$tableName = $saveObjectClass.capitalise($propertyName);
-			$listAnnotation = $saveProperty->getAnnotation()->getContainedType();	
+			$parentColumn = strtolower($saveObjectClass);
 			
 			//Load properties based on list depth
+			$snapshot = Photographer::getSnapshot($saveObject,$saveProperty->getName());
 			for($i = 0; $i < $listDepth; $i++){
 				$tableName .= "List";
 				$listAnnotation = $listAnnotation->getContainedType();
-			}		
-			
-			//Remove old elements from persisted list
-			$listElementQuery = "SELECT * FROM $tableName WHERE ";
-			if($listDepth == 0){
-				$listElementQuery .= strtolower($saveObjectClass)."={$saveObject->getId()}";
-			}else{
-				$listElementQuery .= "parentList=$parentListId";
+				$snapshot = is_null($snapshot)?$snapshot:$snapshot[$parentKey];
 			}
 			
-			$listElementResultSet = DatabaseAdministrator::execute($listElementQuery);
-			$oldElementIds = array();
-			$storedListKeys = array();
-			
-			$listKeys = array();
-			foreach(array_keys($propertyValue) as $listKey){
-				$listKeys[] = strval($listKey);
-			}
-			
-			foreach($listElementResultSet as $listElement){
-				if(!in_array($listElement['name'], $listKeys, true)){
-					$oldElementIds[] = $listElement['id'];
-				}else{
-					$storedListKeys[] = $listElement['name'];
-				}
-			}
-			
-			if(sizeof($oldElementIds) > 0){
-				$storedElementDeleteQuery = "DELETE FROM $tableName WHERE id IN (";
-				foreach($oldElementIds as $oldElementId){
-					$storedElementDeleteQuery .= "?,";
-				}
-				$storedElementDeleteQuery = substr($storedElementDeleteQuery, 0, strlen($storedElementDeleteQuery) - 1);
-				$storedElementDeleteQuery .= ")";
-					
-				call_user_func_array(array("DatabaseAdministrator", "execute"), 
-							array_merge(array($storedElementDeleteQuery), $oldElementIds));
-			}
-			
-			//Add new elements to persisted list
-			$insertQuery = "INSERT INTO $tableName(name,";
-			$updateQuery = "UPDATE $tableName SET ";
-			
-			if($listDepth == 0){
-				$insertQuery .= strtolower($saveObjectClass);
-				$parentKey = $saveObject->getId();
-			}else{
-				$insertQuery .= "parentList";
-				$parentKey = $parentListId;
-			}
-			
-			if($listAnnotation->isCollection()){
-				$insertQuery .= ") VALUES(?,?)";
-			}else{
-				$insertQuery .= ",value) VALUES";
-				$updateQuery .= "value=? ";
-			}
-						
-			if($listDepth == 0){
-				$updateQuery .= "WHERE name=? AND ".strtolower($saveObjectClass)."=?";
-			}else{
-				$updateQuery .= "WHERE name=? AND parentList=?";
-			}
-			
-			$insertValues = array();
-			
-			foreach($propertyValue as $key => $element){
-				$key = (string)$key;
-				if($listAnnotation->isCollection()){
-					if(!in_array($key, $storedListKeys)){
-						DatabaseAdministrator::execute($insertQuery, array($key, $parentKey));
-						$lastInsertId = DatabaseAdministrator::getLastInsertId();
-					}else{
-						if($listDepth == 0){
-							$idQuery = "SELECT id FROM $tableName WHERE name=? AND ".strtolower($saveObjectClass)."=?";
-						}else{
-							$idQuery = "SELECT id FROM $tableName WHERE name=? AND parentList=?";
-						}
-						
-						$currentEntry = DatabaseAdministrator::execute($idQuery, array($key, $parentKey));
-						$lastInsertId = $currentEntry[0]['id'];
-					}
-					
-					$this->writeList($saveObject, $saveProperty, $element, $listDepth + 1, $lastInsertId);
-				}else{					
-					if($listAnnotation->isObject()){
-						if($element){
+			//No need to save clean collections to the database
+			if(!$saveObject->isDirty($saveProperty->getName())){
+				if($saveObject->isLoaded($saveProperty->getName())){
+					foreach($propertyValue as $key => $element){
+						if($listAnnotation->isObject()){
 							$this->writeObject($element);
-							$elementValue = $element->getId();
-						}else{
-							$elementValue = null;
+						}else if($listAnnotation->isCollection()){
+							$this->writeList($saveObject, $saveProperty, $element, $listDepth+1, $key);
 						}
-					}else if($listAnnotation->isDate()){
-						$elementValue = "{$element->getDatestamp()} {$element->getTimestamp()}";
-					}else{
-						$elementValue = $element;
 					}
-					
-					if(in_array($key, $storedListKeys)){
-						DatabaseAdministrator::execute($updateQuery, $elementValue, $key, $parentKey);
-					}else{
-						$insertQuery .= "(?,?,?),";
-						$insertValues = array_merge($insertValues, array($key, $parentKey, $elementValue));
-					}
+				}
+				
+				return;
+			}	
+			
+			//Remove unused keys from the persisted list
+			$storedElementDeleteQuery = "DELETE FROM $tableName WHERE $parentColumn = '{$saveObject->getId()}'";
+			if($listDepth > 0){
+				$storedElementDeleteQuery .= " AND parentKey = '$parentKey'";
+			}
+			
+			if(!is_null($snapshot)){
+				$staleKeys = array_diff(array_keys($snapshot),array_keys($propertyValue));
+				foreach($staleKeys as $index => $staleKey){
+					$staleKeys[$index] = strval($staleKey);
+				}
+				
+				if($staleKeys){
+					$storedElementDeleteQuery .= " AND name IN (".implode(",",array_fill(0,sizeof($staleKeys),"?")).")";
+					call_user_func_array(array("DatabaseAdministrator","execute"),array_merge(array($storedElementDeleteQuery),$staleKeys));
+				}
+			}else{
+				DatabaseAdministrator::execute($storedElementDeleteQuery);
+			}
+			
+			//Add and update elements to persisted list
+			$fields = array(strtolower(get_class($saveObject)),'name');
+			if(!$listAnnotation->isCollection()){
+				$fields[] = 'value';
+			}
+			
+			if($listDepth > 0){
+				$fields[] = 'parentKey';
+			}
+			
+			$placeholders = array();
+			$values = array();
+			foreach($propertyValue as $key => $element){
+				if($snapshot && $snapshot[$key] == $element){
+					continue;
+				}
+				
+				$placeHolders[] = "(".implode(",",array_fill(0,($listDepth == 0)?3:4,"?")).")";
+				$values[] = $saveObject->getId();
+				$values[] = strval($key);
+				
+				 if($listAnnotation->isObject()){
+					$this->writeObject($element);
+					$values[] = $element->getId();
+				}else if($listAnnotation->isCollection()){
+					$this->writeList($saveObject, $saveProperty, $element, $listDepth+1, $key);
+				}else{
+					$values[] = $element;
+				}
+				
+				if($listDepth > 0){
+					$values[] = $parentKey;
 				}
 			}
 			
-			if(sizeof($insertValues) > 0){
-				$insertQuery = substr($insertQuery, 0, strlen($insertQuery) - 1);
-				$insertArray = array_merge(array($insertQuery), $insertValues);
-				call_user_func_array(array("DatabaseAdministrator","execute"), $insertArray);
+			if($placeHolders){
+				$writeListQuery = "INSERT INTO $tableName(".implode(",",$fields).") VALUES ".implode(",",$placeHolders)." ON DUPLICATE KEY ".
+							"UPDATE name=VALUES(name)";
+							
+				if(!$listAnnotation->isCollection()){
+					$writeListQuery .= ", value=VALUES(value)";
+				}
+				
+				call_user_func_array(array("DatabaseAdministrator","execute"),array_merge(array($writeListQuery),$values));
 			}
 		}
 		
@@ -1086,13 +675,18 @@
 			foreach($propertyList as $property){
 				$propertyName = $property->getName();
 				$getterName = "get".capitalise($propertyName);
-				$propertyValue = $object->$getterName();
 				
-				//Skip Array Members, Unspecified Required Values and Unchanged Values
+				//Skip Array Members and Unchanged Values
 				$isArrayMember = $property->getAnnotation()->isCollection();
-				$requiredNotSpecified = !$propertyValue && !$property->getAnnotation()->isBoolean() && $property->getAnnotation()->isRequired();
 				$isUnchanged = !$object->isDirty($propertyName);
-				if($isArrayMember || $requiredNotSpecified || $isUnchanged){
+				if($isArrayMember || $isUnchanged){
+					continue;
+				}
+				
+				//Skip Unspecified Required Values
+				$propertyValue = $object->$getterName();
+				$requiredNotSpecified = !$propertyValue && !$property->getAnnotation()->isBoolean() && $property->getAnnotation()->isRequired();
+				if($requiredNotSpecified){
 					continue;
 				}
 				
@@ -1103,7 +697,7 @@
 						$this->writeObject($propertyValue);
 						
 						//Only rewrite object reference if it has changed
-						if(!Photographer::compareToSnapshot($object,$propertyName)){
+						if(!is_null(Photographer::getSnapshot($object,$propertyName)) && !Photographer::compareToSnapshot($object,$propertyName)){
 							$propertyValueMap[$propertyName] = $propertyValue->getId();
 						}
 					}else if($property->getAnnotation()->isDate()){
@@ -1117,36 +711,6 @@
 			}
 			
 			return $propertyValueMap;
-		}
-		
-		/*
-		 * Determine the MySQL column type for each possible WadadliClass property type
-		 */
-		private function getColumnType($annotation){
-			if($annotation->isInteger()){
-				$columnType = "INT";
-			}else if($annotation->isFloat() || $annotation->isMonetary()){
-				$columnType = "FLOAT";
-			}else if($annotation->isBoolean()){
-				$columnType = "BOOLEAN";
-			}else if($annotation->isDate()){
-				$columnType = "DATETIME";
-			}else if($annotation->isObject()){
-				$columnType = "VARCHAR(20)";
-			}else if($annotation->isText()){
-				$columnType = "TEXT";
-			}else if($annotation->isString()){
-				$limit = 256;
-				if($annotation->getMax()){
-					$limit = $annotation->getMax();
-				}
-				
-				$columnType = "VARCHAR($limit)";
-			}else if($annotation->isCollection()){
-				$columnType = "";
-			}
-			
-			return $columnType;
 		}
 		
 		/*
@@ -1247,12 +811,16 @@
 		 /*
 		  * Delayed loading of object collections to ensure a single query to each table
 		  */
-		 private function loadCollections($listTable, $listAnnotation, $parentIds, $parentColumn = "parentList"){
+		 private function loadCollections($listTable, $listAnnotation, $parentIds, $parentColumn = "parentKey"){
 			$collections = array();
 			
-			$fields = "id,$parentColumn,name";
+			$fields = "$parentColumn,name";
 			if(!$listAnnotation->isCollection()){
 				$fields .= ",value";
+			}
+			
+			if($parentColumn == "parentKey"){
+				$fields .= ",parentKey";
 			}
 			
 			$results = array();
@@ -1272,13 +840,13 @@
 				$searcher->addCriterion('id',Criterion::EQUAL,$values);
 				$objects = $subGateway->find($listAnnotation->getObjectClass(), $searcher);
 			}else if($listAnnotation->isCollection()){
-				$ids = array();
+				$keys = array();
 				
 				foreach($results as $result){
-					$ids[] = $result['id'];
+					$keys[] = $result['name'];
 				}
 				
-				$nestedCollections = $this->loadCollections($listTable."List", $listAnnotation->getContainedType(), $ids);
+				$nestedCollections = $this->loadCollections($listTable."List", $listAnnotation->getContainedType(), $keys);
 			}
 			
 			foreach($results as $result){

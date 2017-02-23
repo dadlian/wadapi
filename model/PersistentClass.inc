@@ -67,7 +67,7 @@
 				}
 			}
 			
-			$this->loadedBits["created"] = false;
+			$this->loadedBits["created"] = true;
 			$this->loadedBits["modified"] = true;
 			
 			QuarterMaster::store($this);
@@ -88,6 +88,9 @@
 			foreach($instance->loadedBits as $field => $loadedBit){
 				$instance->loadedBits[$field] = false;
 			}
+			
+			$instance->loadedBits["created"] = true;
+			$instance->loadedBits["modified"] = true;
 			
 			//A bound instance always starts clean
 			$instance->markClean();
@@ -331,9 +334,13 @@
 		private function loadCollections($listAnnotation, $listTable, $parentIds, $parentColumn = "parentList"){
 			$collections = array();
 			
-			$fields = "id,$parentColumn,name";
+			$fields = "$parentColumn,name";
 			if(!$listAnnotation->isCollection()){
 				$fields .= ",value";
+			}
+			
+			if($parentColumn == "parentKey"){
+				$fields .= ",parentKey";
 			}
 			
 			$results = array();
@@ -342,13 +349,13 @@
 			}
 			
 			if($listAnnotation->isCollection()){
-				$ids = array();
+				$keys = array();
 				
 				foreach($results as $result){
-					$ids[] = $result['id'];
+					$keys[] = $result['name'];
 				}
 				
-				$nestedCollections = $this->loadCollections($listTable."List", $listAnnotation->getContainedType(), $ids);
+				$nestedCollections = $this->loadCollections($listTable."List", $listAnnotation->getContainedType(), $keys);
 			}
 			
 			foreach($results as $result){
