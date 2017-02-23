@@ -43,6 +43,7 @@
 	require_once(dirname(__FILE__)."/worker/Dispatcher.inc");
 	require_once(dirname(__FILE__)."/worker/Janitor.inc");
 	require_once(dirname(__FILE__)."/worker/Magistrate.inc");
+	require_once(dirname(__FILE__)."/worker/Photographer.inc");
 	require_once(dirname(__FILE__)."/worker/Postman.inc");
 	require_once(dirname(__FILE__)."/worker/QuarterMaster.inc");
 	require_once(dirname(__FILE__)."/worker/Registrar.inc");

@@ -8,7 +8,12 @@
 		/*
 		 * Records whether or not object members have been written to
 		 */
-		private static $dirtyBits = array();
+		private $dirtyBits = array();
+		
+		/*
+		 * Records whether or not primitive object members have been set
+		 */
+		private $loadedBits = array();
 		
 		/*
 		 * A unique integer identifying this object from other instances of the same class.
@@ -54,9 +59,16 @@
 			//Initialise Dirty Bits
 			foreach(Mirror::reflectClass(get_class($this))->getProperties(false) as $property){
 				if(!in_array($property,array('id','created','modified'))){
-					$this->dirtyBits[$property->getName()] = false;
+					$this->dirtyBits[$property->getName()] = true;
+					
+					if(!$property->getAnnotation()->isObject() && !$property->getAnnotation()->isCollection()){
+						$this->loadedBits[$property->getName()] = true;
+					}
 				}
 			}
+			
+			$this->loadedBits["created"] = false;
+			$this->loadedBits["modified"] = true;
 			
 			QuarterMaster::store($this);
 		}
@@ -73,6 +85,16 @@
 			$instance->setGateway($gateway);
 			$instance->setLoaded(false);
 			
+			foreach($instance->loadedBits as $field => $loadedBit){
+				$instance->loadedBits[$field] = false;
+			}
+			
+			//A bound instance always starts clean
+			$instance->markClean();
+			
+			//Take a snapshot of the object stub (it will be retaken when the object is loaded)
+			Photographer::takeSnapshot($instance);
+			
 			return $instance;
 		}
 		  
@@ -87,17 +109,24 @@
 		 * Overridden getX method to account for lazy loading
 		 */
 		 protected function getX($searchProperty){
-			if(!in_array($searchProperty,array('id','gateway','loaded'))){
+			$annotation = Mirror::reflectProperty($this,$searchProperty)->getAnnotation();
+			
+			if(!in_array($searchProperty,array('id','gateway','loaded')) && !$annotation->isCollection() && !$this->isLoaded($searchProperty)){
 				$this->loadData();
 			}
 			
-			if(Mirror::reflectProperty($this,$searchProperty)->getAnnotation()->isCollection() && is_null($this->$searchProperty)){
+			if($annotation->isCollection() && is_null($this->$searchProperty)){
 				$this->$searchProperty = $this->loadCollections(
-					Mirror::reflectProperty($this,$searchProperty)->getAnnotation()->getContainedType(), //ListAnnotation
+					$annotation->getContainedType(), //ListAnnotation
 					get_class($this).capitalise($searchProperty), //ListTable
 					array($this->getId()), //Current Object ID
 					strtolower(get_class($this)) //ParentTable
 				)[$this->getId()];
+			
+				//Take a snapshot of the recently loaded collection
+				Photographer::takeSnapshot($this,$searchProperty);
+				
+				$this->dirtyBits[$searchProperty] = false;
 			}
 			
 		 	return parent::getX($searchProperty);
@@ -107,20 +136,29 @@
 		 * Overridden setX method to update last modified time
 		 */
 		 protected function setX($propertyName, $newValue, $calledMethod){
-			$oldValue = $this->$propertyName;
-			if(!is_null($oldValue) && $newValue != $oldValue){
+			parent::setX($propertyName, $newValue, $calledMethod);
+			
+			//Set Loaded Bit to True
+			if(array_key_exists($propertyName,$this->loadedBits)){
+				$this->loadedBits[$propertyName] = true;
+			}
+			
+			//See whether we should mark this field as dirty based on its original value
+			if(!Photographer::compareToSnapshot($this,$propertyName)){
 				$this->modified = strval(time());
 				
 				if(array_key_exists($propertyName,$this->dirtyBits)){
 					$this->dirtyBits[$propertyName] = true;
 				}
+			}else{
+				$this->dirtyBits[$propertyName] = false;
 			}
 			
 			if(!$this->modified){
 				$this->modified = strval(time());
 			}
 			
-			return parent::setX($propertyName, $newValue, $calledMethod);
+			return;
 			
 		 }
 		 
@@ -146,9 +184,13 @@
 			if($field){
 				$property = Mirror::reflectProperty($this,$field)->getAnnotation();
 				if($property->isObject()){
-					return $this->dirtyBits[$field] || $this->$field->isDirty();
+					if($this->$field){
+						return $this->dirtyBits[$field] || $this->$field->isDirty();
+					}else{
+						return false;
+					}
 				}else if($property->isCollection()){
-					$leaves = $this->field;
+					$leaves = $this->$field;
 					if(is_null($leaves)){
 						return false;
 					}
@@ -168,7 +210,7 @@
 					
 					if($containedType->isObject()){
 						foreach($leaves as $leaf){
-							if($leaf->isDirty()){
+							if($leaf && $leaf->isDirty()){
 								return true;
 							}
 						}
@@ -186,6 +228,49 @@
 				}
 				
 				return false;
+			}
+		  }
+		 
+		 /*
+		  * Marks the object as clean either because it was freshly loaded, or recently written to the database
+		  */
+		  protected function markClean(){
+			foreach($this->dirtyBits as $field => $dirtyBit){
+				$this->dirtyBits[$field] = false;
+			}
+		  }
+		 
+		 /*
+		  * Returns true if the specified field has been loaded from the database, false otherwise, If no field is specified, the function
+		  * returns true if all of the object's fields have been loaded, and false otherwise
+		  */
+		  protected function isLoaded($field=""){
+			$class = Mirror::reflectClass($this);
+			if($field && !$class->hasProperty($field)){
+				fatal_error(DATA_ACCESS_ERROR,"Can't determine loaded status on non-existant field '$field'");
+			}
+			
+			if($field){
+				$property = Mirror::reflectProperty($this,$field)->getAnnotation();
+				if($property->isObject()){
+					if($this->$field){
+						return $this->$field->isLoaded();
+					}else{
+						return false;
+					}
+				}else if($property->isCollection()){
+					return !is_null($this->$field);
+				}else{
+					return $this->loadedBits[$field];
+				}
+			}else{
+				foreach(Mirror::reflectClass($this)->getProperties(false) as $property){
+					if(!$this->isLoaded($property->getName())){
+						return false;
+					}
+				}
+				
+				return true;
 			}
 		  }
 		 
@@ -227,10 +312,20 @@
 			$class = Mirror::reflectClass($className);
 			foreach($class->getProperties(false) as $property){
 				$propertyName = $property->getName();
-				$this->$propertyName = $object->$propertyName;	
+				$this->$propertyName = $object->$propertyName;
+				
+				if(!$property->getAnnotation()->isCollection()){
+					$this->loadedBits[$propertyName] = true;
+				}
+			}
+			
+			//Mark all fields as clean
+			foreach($this->dirtyBits as $field => $dirtyBit){
+				$this->dirtyBits[$field] = false;
 			}
 			
 			$this->loaded = true;
+			Photographer::takeSnapshot($this);
 		}
 		
 		private function loadCollections($listAnnotation, $listTable, $parentIds, $parentColumn = "parentList"){

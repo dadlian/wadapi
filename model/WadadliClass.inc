@@ -286,7 +286,8 @@
 					 $tempArray[] = $insertValue;
 				}
 				
-				$this->$propertyName = $tempArray;
+				$setter = "set".capitalise($propertyName);
+				$this->$setter($tempArray);
 			}
 		 }
 		
@@ -330,7 +331,8 @@
 					}
 				}
 				
-				$this->$propertyName = $tempArray;
+				$setter = "set".capitalise($propertyName);
+				$this->$setter($tempArray);
 			}
 		 }		 
 		 
@@ -364,7 +366,9 @@
 				$getter = "get".capitalise($propertyName);
 				$tempArray = $this->$getter();
 				$tempArray[$insertKey] = $insertValue;
-				$this->$propertyName = $tempArray;
+				
+				$setter = "set".capitalise($propertyName);
+				$this->$setter($tempArray);
 		 	}
 		}
 		 
@@ -397,7 +401,9 @@
 					
 					if($remove){
 						unset($collection[$viewKey]);
-						$this->$propertyName = $collection;
+				
+						$setter = "set".capitalise($propertyName);
+						$this->$setter($collection);
 					}
 				}
 				
@@ -467,7 +473,7 @@
 			}else if($annotation->isObject()){
 				return null;
 			}else if($annotation->isCollection()){
-				return array();
+				return null;
 			}
 		  }
 		  

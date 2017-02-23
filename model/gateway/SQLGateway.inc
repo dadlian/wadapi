@@ -414,6 +414,12 @@
 						
 						foreach($collections as $ownerID => $collection){
 							$objects[$ownerID]->$setter($collection);
+							
+							//Take a snapshot of the object after collection loading
+							Photographer::takeSnapshot($objects[$ownerID]);
+				
+							//Mark object as clean after collection loading
+							$objects[$ownerID]->markClean();
 						}
 					}
 				}
@@ -885,6 +891,11 @@
 		 * Performs the SQL Query to either insert or update an object to the database
 		 */
 		 public function writeObject($saveObject){
+			//No need to save clean objects to the database
+			if(!$saveObject->isDirty()){
+				return;
+			}
+			
 			$saveObjectClass = Mirror::reflectClass($saveObject);
 			$classHierarchy = $saveObjectClass->getClassHierarchy();
 		
@@ -894,35 +905,37 @@
 			
 			//Write each class component of the saveObject's hierarchy to the corresponding database table
 			foreach($classHierarchy as $class){
-				$propertyValueMap = $this->buildPropertyValueMap($class->getProperties(false), $saveObject);
-				
-				$saveValues = array();
-				$classProperties = implode(",",array_keys($propertyValueMap));
-				
-				//Setup Insert Part of Query
-				$insertParameters = implode(",",array_fill(0,sizeof($propertyValueMap),"?"));
-				$insertValues = array_merge(
-							array($saveObject->getId(),$saveObject->getCreated(),$saveObject->getModified()),
-							array_values($propertyValueMap)
-						);
-				
-				//Setup Update Part of Query
-				$updateParameters = array();
-				$updateValues = array($saveObject->getModified());
-				foreach($propertyValueMap as $property => $value){
-					$updateParameters[] = "$property=?";
-					$updateValues[] = $value;
+				$propertyList = $class->getProperties(false);
+				$propertyValueMap = $this->buildPropertyValueMap($propertyList, $saveObject);
+				if($propertyValueMap){
+					$saveValues = array();
+					$classProperties = implode(",",array_keys($propertyValueMap));
+					
+					//Setup Insert Part of Query
+					$insertParameters = implode(",",array_fill(0,sizeof($propertyValueMap),"?"));
+					$insertValues = array_merge(
+								array($saveObject->getId(),$saveObject->getCreated(),$saveObject->getModified()),
+								array_values($propertyValueMap)
+							);
+					
+					//Setup Update Part of Query
+					$updateParameters = array();
+					$updateValues = array($saveObject->getModified());
+					foreach($propertyValueMap as $property => $value){
+						$updateParameters[] = "$property=?";
+						$updateValues[] = $value;
+					}
+					
+					//Setup Prepared Statement Values
+					$saveValues = array_merge($insertValues,$updateValues);
+					
+					//Build Save Query
+					$saveQuery = "INSERT INTO {$class->getName()}(id,created,modified,$classProperties) VALUES(?,?,?,$insertParameters) ".
+							"ON DUPLICATE KEY UPDATE modified=?,".implode(",",$updateParameters);
+					
+					//Execute the save query and pass in the extracted parameters
+					call_user_func_array(array("DatabaseAdministrator","execute"), array_merge(array($saveQuery), $saveValues));
 				}
-				
-				//Setup Prepared Statement Values
-				$saveValues = array_merge($insertValues,$updateValues);
-				
-				//Build Save Query
-				$saveQuery = "INSERT INTO {$class->getName()}(id,created,modified,$classProperties) VALUES(?,?,?,$insertParameters) ".
-						"ON DUPLICATE KEY UPDATE modified=?,".implode(",",$updateParameters);
-				
-				//Execute the save query and pass in the extracted parameters
-				call_user_func_array(array("DatabaseAdministrator","execute"), array_merge(array($saveQuery), $saveValues));
 				
 				//Save the object's collection properties
 				foreach($propertyList as $property){
@@ -1075,10 +1088,11 @@
 				$getterName = "get".capitalise($propertyName);
 				$propertyValue = $object->$getterName();
 				
-				//Skip Array Members and Unspecified Required Values
+				//Skip Array Members, Unspecified Required Values and Unchanged Values
 				$isArrayMember = $property->getAnnotation()->isCollection();
 				$requiredNotSpecified = !$propertyValue && !$property->getAnnotation()->isBoolean() && $property->getAnnotation()->isRequired();
-				if($isArrayMember || $requiredNotSpecified){
+				$isUnchanged = !$object->isDirty($propertyName);
+				if($isArrayMember || $requiredNotSpecified || $isUnchanged){
 					continue;
 				}
 				
@@ -1087,7 +1101,11 @@
 				}else{
 					if($property->getAnnotation()->isObject()){
 						$this->writeObject($propertyValue);
-						$propertyValueMap[$propertyName] = $propertyValue->getId();
+						
+						//Only rewrite object reference if it has changed
+						if(!Photographer::compareToSnapshot($object,$propertyName)){
+							$propertyValueMap[$propertyName] = $propertyValue->getId();
+						}
 					}else if($property->getAnnotation()->isDate()){
 						$propertyValueMap[$propertyName] = "{$propertyValue->getDatestamp()} {$propertyValue->getTimestamp()}";
 					}else if($property->getAnnotation()->isString()){
@@ -1212,6 +1230,12 @@
 			$object->setId($data['id']);
 			$object->setCreated($data['created']);
 			$object->setModified($data['modified']);
+			
+			//Take a snapshot of the object as it was loaded
+			Photographer::takeSnapshot($object);
+				
+			//Loaded Objects always start as Clean
+			$object->markClean();
 			
 			//Cache object before returning it
 			QuarterMaster::store($object);
