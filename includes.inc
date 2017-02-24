@@ -63,7 +63,6 @@
 	require_once(dirname(__FILE__)."/controller/ResourceController.inc");
 	require_once(dirname(__FILE__)."/controller/PagedResourceController.inc");
 	require_once(dirname(__FILE__)."/controller/APIError.inc");
-	require_once(dirname(__FILE__)."/controller/CreateTest.inc");
 	
 	require_once(dirname(__FILE__)."/model/database/DatabaseConnection.inc");
 	require_once(dirname(__FILE__)."/model/database/MySQLConnection.inc");
@@ -88,6 +87,9 @@
 	require_once(dirname(__FILE__)."/model/system/URLPattern.inc");
 	require_once(dirname(__FILE__)."/model/system/WadadliMessage.inc");
 	require_once(dirname(__FILE__)."/model/system/Warrant.inc");
+	
+	//Include Utility Endpoints
+	require_once(dirname(__FILE__)."/controller/utilities/WadapiRebuildDatabase.inc");
 	
 	//Initialise Custom Settings Files
 	if(isset($settings)){

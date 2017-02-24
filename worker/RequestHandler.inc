@@ -7,6 +7,11 @@
 		private static $queryParameters;
 		private static $acceptables;
 		private static $authenticatedToken;
+		private static $isUtility;
+		
+		public static function isUtility(){
+			return self::$isUtility;
+		}
 		
 		public static function getHost(){
 			if(!self::$request){
@@ -39,7 +44,7 @@
 				}
 				
 				$endpointsGateway = new EndpointsGateway();
-				self::$endpoint = $endpointsGateway->findUnique('path',self::getRequestURI());
+				self::$endpoint = self::$endpoint?self::$endpoint:$endpointsGateway->findUnique('path',self::getRequestURI());
 			}
 			
 			return self::$endpoint;
@@ -191,14 +196,6 @@
 			return self::$request->viewFromHeaders("Slug")?self::$request->viewFromHeaders("Slug"):"";
 		}
 		
-		public static function isTest(){
-			if(!self::$request){
-				self::initialise();
-			}
-			
-			return self::$request->viewFromHeaders("X-Test-Run") && self::$request->viewFromHeaders("X-Test-Run") === "True";
-		}
-		
 		public static function getContent(){
 			if(!self::$request){
 				self::initialise();
@@ -235,6 +232,19 @@
 		}
 		
 		private static function initialise(){
+			self::$isUtility = false;
+			
+			//Handle Native Wadapi Calls. These override calls to the same endpoint in the userspace, if any.
+			$requestURI = substr(preg_replace("/\?".preg_replace("/\//","\/",preg_quote($_SERVER['QUERY_STRING']))."/","",$_SERVER['REQUEST_URI']),1);
+			switch($requestURI){
+				case "wadapi/rebuild":
+					self::$endpoint = new Endpoint("Wadapi Database Rebuilder",$requestURI,"WadapiRebuildDatabase",array(),array(),array(),array(),array(),array());
+					self::$isUtility = true;
+					break;
+				default:
+					self::$endpoint = null;
+			}
+			
 			//Parse query string for argument keys and values
 			$arguments = array();
 			if($_SERVER['QUERY_STRING']){
@@ -285,7 +295,7 @@
 			//Overide Global Acceptables Setting with Endpoint Settings if they exist			
 			$endpointsGateway = new EndpointsGateway();
 			$requestURI = substr(preg_replace("/\?".preg_replace("/\//","\/",preg_quote($_SERVER['QUERY_STRING']))."/","",$_SERVER['REQUEST_URI']),1);
-			$endpoint = $endpointsGateway->findUnique('path',$requestURI);
+			$endpoint = self::$endpoint?self::$endpoint:$endpointsGateway->findUnique('path',$requestURI);
 			
 			if(!$endpoint){
 				ResponseHandler::missing("The requested endpoint /$requestURI does not exist on this server.");
