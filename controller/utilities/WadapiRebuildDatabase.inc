@@ -23,6 +23,12 @@
 		}
 		
 		protected function post(){
+			//Confirm that the user has utilities access
+			$password = $this->getFromContent("authentication");
+			if($password !== SettingsManager::getSetting("install","adminpass")){
+				ResponseHandler::forbidden("The provided tokens do not have permission to perform this action.");
+			}
+			
 			Curator::rebuildDatabase();
 			
 			$message = "Database Rebuilt Successfully";
