@@ -23,8 +23,10 @@
 		}
 		
 		protected function post(){
-			$payload = $this->assemblePayload("Database Rebuilt Successfully");
-			ResponseHandler::created($payload,$this->getBase()."/wadapi/rebuild");
+			Curator::rebuildDatabase();
+			
+			$message = "Database Rebuilt Successfully";
+			ResponseHandler::created($this->assemblePayload($message),$this->getBase()."/wadapi/rebuild");
 		}
 	}
 ?>

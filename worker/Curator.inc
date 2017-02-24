@@ -9,19 +9,24 @@
 		/*
 		 * Rebuilds the database based on the current PersistentClass definitions in the system
 		 */
-		protected static function rebuildSQLDatabase(){
-			foreach($persistentClasses as $class){
-				//Manage table hierarchy for object class
-				self::manageTableForClass($class);
-				
-				while(sizeof(self::$listProperties) > 0){
-					$listProperty = array_shift(self::$listProperties);
-					self::manageTableForList($listProperty);
+		protected static function rebuildDatabase(){
+			$persistentClasses = array();
+			
+			foreach(get_declared_classes() as $declaredClass){
+				$class = Mirror::reflectClass($declaredClass);
+				if($class->descendsFrom("PersistentClass") && $declaredClass !== "PersistentClass"){
+					//Manage table hierarchy for object class
+					self::manageTableForClass($class);
+					
+					while(sizeof(self::$listProperties) > 0){
+						$listProperty = array_shift(self::$listProperties);
+						self::manageTableForList($listProperty);
+					}
+					
+					//Re-initialise seen class hierarchy for this object
+					self::$classesSeen = array();
+					self::$listProperties = array();
 				}
-				
-				//Re-initialise seen class hierarchy for this object
-				self::$classesSeen = array();
-				self::$listProperties = array();
 			}
 		}
 		 
@@ -164,16 +169,16 @@
 					self::manageTableForClass($objectClass);
 					
 					$constraintName = "fk_".SettingsManager::getSetting("database","tableprefix")."_".substr(strtolower($tableName),0,25)."_value";
-					$createStatement .= ",value VARCHAR(20),CONSTRAINT $constraintName
-								FOREIGN KEY (value) REFERENCES {$objectClass->getName()} (id) 
-								ON UPDATE CASCADE ON DELETE CASCADE,";
+					$createStatement .= ",value VARCHAR(20),CONSTRAINT $constraintName ".
+								"FOREIGN KEY (value) REFERENCES {$objectClass->getName()} (id) ".
+								"ON UPDATE CASCADE ON DELETE CASCADE,";
 				}else if(!$nextAnnotation->isCollection()){
 					$columnType = self::getColumnType($nextAnnotation);
-					$createStatement .= "value $columnType,";
+					$createStatement .= ",value $columnType,";
 				}
 				
 				//Specify Primary Key Constraint
-				$createStatement .= ",PRIMARY KEY(".strtolower($className).",name)";
+				$createStatement .= "PRIMARY KEY(".strtolower($className).",name)";
 				
 				//Specify owning object column constraint
 				$tableAbbr = substr(strtolower($tableName), 0, 15).substr(strtolower($tableName), strlen($tableName)-10,strlen($tableName));
@@ -318,6 +323,11 @@
 					$tableDescription = DatabaseAdministrator::execute("DESC $tableName");
 					$dataIndex = sizeof($tableDescription) - 1;
 					
+					$currentColumns = array();
+					foreach($tableDescription as $row){
+						$currentColumns[] = $row['Field'];
+					}
+					
 					$storedPropertyName = $tableDescription[$dataIndex]['Field'];
 					$storedAnnotationType = $tableDescription[$dataIndex]['Type'];
 					$storedKey = $tableDescription[$dataIndex]['Key'];
@@ -341,11 +351,11 @@
 					}
 					
 					//If property recently changed from collection add element column
-					if(sizeof($tableDescription) == 3 && !$nextAnnotation->isCollection()){
-						DatabaseAdministrator::execute("ALTER TABLE $tableName ADD COLUMN value $newColumnType DEFAULT NULL");						
+					if(!$nextAnnotation->isCollection() && !in_array("value",$currentColumns)){
+						DatabaseAdministrator::execute("ALTER TABLE $tableName ADD COLUMN value $newColumnType DEFAULT NULL");
 					//If list type has become collection, drop element column
-					}else if($nextAnnotation->isCollection() && sizeof($tableDescription) > 3){
-						DatabaseAdministrator::execute("ALTER TABLE $tableName DROP COLUMN ".$tableDescription[3]['Field']);
+					}else if($nextAnnotation->isCollection() && in_array("value",$currentColumns)){
+						DatabaseAdministrator::execute("ALTER TABLE $tableName DROP COLUMN value");
 					}
 					
 					
@@ -361,7 +371,7 @@
 							DatabaseAdministrator::execute("ALTER TABLE $tableName DROP KEY $columnKey");	
 						}
 							
-						if(sizeof($tableDescription) > 3){
+						if(in_array("value",$currentColumns)){
 							DatabaseAdministrator::execute("ALTER TABLE $tableName CHANGE value value $newColumnType");
 						}
 						
@@ -373,10 +383,10 @@
 								$foreignKeyTable = $nextAnnotation->getObjectClass();
 							}
 							
-							DatabaseAdministrator::execute("ALTER TABLE $tableName ADD CONSTRAINT $columnKey 
-												FOREIGN KEY(value)
-												REFERENCES $foreignKeyTable(id)
-												ON DELETE CASCADE ON UPDATE CASCADE");
+							DatabaseAdministrator::execute("ALTER TABLE $tableName ADD CONSTRAINT $columnKey ".
+												"FOREIGN KEY(value) ".
+												"REFERENCES $foreignKeyTable(id) ".
+												"ON DELETE CASCADE ON UPDATE CASCADE");
 						}
 					}
 				}
