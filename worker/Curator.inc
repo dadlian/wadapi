@@ -249,7 +249,6 @@
 					(($property->getAnnotation()->isFloat() || $property->getAnnotation()->isMonetary()) 
 						&& $oldColumnType != "float") || 
 					($property->getAnnotation()->isBoolean() && !preg_match("/tinyint/", $oldColumnType)) || 
-					($property->getAnnotation()->isDate() && $oldColumnType != "datetime") ||
 					($property->getAnnotation()->isText() && $oldColumnType != "text") ||
 					($property->getAnnotation()->isString() && !$property->getAnnotation()->isText() && 
 						$property->getAnnotation()->getMax() &&
@@ -333,7 +332,6 @@
 					   ($nextAnnotation->isInteger() && (!preg_match("/^int/", $storedAnnotationType) || $storedKey == "MUL"))||
 					   (($nextAnnotation->isFloat() || $nextAnnotation->isMonetary()) && $storedAnnotationType != "float") || 
 					   ($nextAnnotation->isBoolean() && !preg_match("/tinyint/", $storedAnnotationType)) || 
-					   ($nextAnnotation->isDate() && $storedAnnotationType != "datetime") ||
 					   ($nextAnnotation->isText() && $storedAnnotationType != "text") ||
 					   ($nextAnnotation->isString() && !$nextAnnotation->isText() &&  $nextAnnotation->getMax() 
 						&& !preg_match("/^varchar\({$nextAnnotation->getMax()}/", $storedAnnotationType)) ||
@@ -395,8 +393,6 @@
 				$columnType = "FLOAT";
 			}else if($annotation->isBoolean()){
 				$columnType = "BOOLEAN";
-			}else if($annotation->isDate()){
-				$columnType = "DATETIME";
 			}else if($annotation->isObject()){
 				$columnType = "VARCHAR(20)";
 			}else if($annotation->isText()){

@@ -55,9 +55,7 @@
 				$class = Mirror::reflectClass($value);
 			}
 			
-			if($class && $class->getName() == "WadadliDate"){
-				$value = $value->getDatetimestamp();
-			}else if($class && $class->descendsFrom('PersistentClass')){
+			if($class && $class->descendsFrom('PersistentClass')){
 				$value = $value->getId();
 			}else if($class || is_array($value)){
 				$type = gettype($value);

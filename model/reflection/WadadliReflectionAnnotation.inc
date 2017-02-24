@@ -4,7 +4,6 @@
 		const OBJECT = "Object";
 		const STRING = "WadapiString";
 		const BOOLEAN = "Boolean";
-		const DATE = "Date";
 		const INTEGER = "Integer";
 		const FLOAT = "WadapiFloat";
 		const MONETARY = "Monetary";
@@ -248,10 +247,6 @@
 		
 		public function isBoolean(){
 			return $this->getType() == self::BOOLEAN;	
-		}
-		
-		public function isDate(){
-			return $this->getType() == self::DATE;	
 		}
 		
 		public function isInteger(){

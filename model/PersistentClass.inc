@@ -170,8 +170,7 @@
 		  */
 		 protected function getCreationTime(){
 			$createTime = $this->getCreated();
-			return new WadadliDate(intval(date('Y',$createTime)),intval(date('m',$createTime)),intval(date('d',$createTime)),
-						intval(date('G',$createTime)),intval(date('i',$createTime)),intval(date('s',$createTime)));
+			return date('Y-m-d G:i:s',$createTime);
 		 }
 		 
 		 /*
@@ -328,6 +327,8 @@
 			}
 			
 			$this->loaded = true;
+			
+			//Replace the stub snapshot with a snapshot of the full class
 			Photographer::takeSnapshot($this);
 		}
 		
@@ -344,9 +345,7 @@
 			}
 			
 			$results = array();
-			if(DatabaseAdministrator::tableExists($listTable) && $parentIds){
-				$results = DatabaseAdministrator::execute("SELECT $fields FROM $listTable WHERE $parentColumn IN (".implode(",",$parentIds).")");
-			}
+			$results = DatabaseAdministrator::execute("SELECT $fields FROM $listTable WHERE $parentColumn IN (".implode(",",$parentIds).")");
 			
 			if($listAnnotation->isCollection()){
 				$keys = array();
@@ -363,12 +362,7 @@
 					$collections[$result[$parentColumn]] = array();
 				}
 				
-				if($listAnnotation->isDate()){
-					$datePieces = preg_split("/[-: ]/", $result['value']);
-					$value = new WadadliDate(intval($datePieces[0]),intval($datePieces[1]),intval($datePieces[2]),
-										intval($datePieces[3]),intval($datePieces[4]),intval($datePieces[5]));
-					$collections[$result[$parentColumn]][$result['name']] = $value;
-				}else if($listAnnotation->isObject()){
+				if($listAnnotation->isObject()){
 					if($result['value']){
 						//Set object stub for lazy loading
 						$containedClass = $listAnnotation->getObjectClass();

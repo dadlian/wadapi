@@ -89,11 +89,6 @@
 			
 			$class = Mirror::reflectClass($className);
 			
-			//If there are no objects of the searched for type in the database, simply return an empty array
-			if(!DatabaseAdministrator::tableExists($className)){
-				return $objects;
-			}
-			
 			//Construct a query and search for all objects matching it
 			$where = array();
 			$whereArguments = array();
@@ -261,7 +256,7 @@
 							}						
 						}
 					
-						if(!DatabaseAdministrator::tableExists($ownerClass->getName()) || !$annotation->isObject()){
+						if(!$annotation->isObject()){
 							continue;
 						}
 					
@@ -433,6 +428,19 @@
 			return $mergedObjects;
 		}
 		
+		public function findUnique(){
+			$arguments = func_get_args();
+			
+			//Update records parameter to 1 and call findUnique
+			$arguments[0] = $arguments[0]?$arguments[0]:"";
+			$arguments[1] = $arguments[1]?$arguments[1]:null;
+			$arguments[2] = $arguments[2]?$arguments[2]:null;
+			$arguments[3] = 1;
+			
+			$results = call_user_func_array(array($this,'find'), $arguments);
+			return $results?array_shift($results):null;
+		}
+		
 		public function save($saveObjects){
 			if(!is_array($saveObjects)){
 				$saveObjects = array($saveObjects);
@@ -467,14 +475,11 @@
 								Mirror::reflectClass("PersistentClass")->getClassHierarchy());
 
 				$class = $classHierarchy?array_shift($classHierarchy):Mirror::reflectClass($deleteObject);
-				
-				if(DatabaseAdministrator::tableExists($class->getName())){
-					if(!array_key_exists($class->getName(),$oldObjectMap)){
-						$oldObjectMap[$class->getName()] = array();
-					}
-					
-					$oldObjectMap[$class->getName()][] = $deleteObject->getId();
+				if(!array_key_exists($class->getName(),$oldObjectMap)){
+					$oldObjectMap[$class->getName()] = array();
 				}
+				
+				$oldObjectMap[$class->getName()][] = $deleteObject->getId();
 				
 				//Enqueue old files for deletion
 				foreach($class->getProperties() as $property){
@@ -567,6 +572,11 @@
 		 * Given an object and a specified list property, saves the value of the property to the database
 		 */
 		private function writeList($saveObject, $saveProperty, $propertyValue, $listDepth = 0, $parentKey = 0){
+			//No need to save clean collections to the database
+			if(!$saveObject->isDirty($saveProperty->getName())){
+				return;
+			}
+			
 			if(!$propertyValue){
 				$propertyValue = array();
 			}
@@ -583,30 +593,15 @@
 				$tableName .= "List";
 				$listAnnotation = $listAnnotation->getContainedType();
 				$snapshot = is_null($snapshot)?$snapshot:$snapshot[$parentKey];
-			}
-			
-			//No need to save clean collections to the database
-			if(!$saveObject->isDirty($saveProperty->getName())){
-				if($saveObject->isLoaded($saveProperty->getName())){
-					foreach($propertyValue as $key => $element){
-						if($listAnnotation->isObject()){
-							$this->writeObject($element);
-						}else if($listAnnotation->isCollection()){
-							$this->writeList($saveObject, $saveProperty, $element, $listDepth+1, $key);
-						}
-					}
-				}
-				
-				return;
 			}	
 			
-			//Remove unused keys from the persisted list
-			$storedElementDeleteQuery = "DELETE FROM $tableName WHERE $parentColumn = '{$saveObject->getId()}'";
-			if($listDepth > 0){
-				$storedElementDeleteQuery .= " AND parentKey = '$parentKey'";
-			}
-			
+			//Remove unused keys from the persisted list (will not apply to newly created objects)
 			if(!is_null($snapshot)){
+				$storedElementDeleteQuery = "DELETE FROM $tableName WHERE $parentColumn = '{$saveObject->getId()}'";
+				if($listDepth > 0){
+					$storedElementDeleteQuery .= " AND parentKey = '$parentKey'";
+				}
+			
 				$staleKeys = array_diff(array_keys($snapshot),array_keys($propertyValue));
 				foreach($staleKeys as $index => $staleKey){
 					$staleKeys[$index] = strval($staleKey);
@@ -616,8 +611,6 @@
 					$storedElementDeleteQuery .= " AND name IN (".implode(",",array_fill(0,sizeof($staleKeys),"?")).")";
 					call_user_func_array(array("DatabaseAdministrator","execute"),array_merge(array($storedElementDeleteQuery),$staleKeys));
 				}
-			}else{
-				DatabaseAdministrator::execute($storedElementDeleteQuery);
 			}
 			
 			//Add and update elements to persisted list
@@ -633,6 +626,12 @@
 			$placeholders = array();
 			$values = array();
 			foreach($propertyValue as $key => $element){
+				//Write any dirty object list elemenets to the database
+				if($listAnnotation->isObject() && $element->isDirty()){
+					$this->writeObject($element);
+				}
+			
+				//Do not write list elements that have not changed
 				if($snapshot && $snapshot[$key] == $element){
 					continue;
 				}
@@ -642,7 +641,6 @@
 				$values[] = strval($key);
 				
 				 if($listAnnotation->isObject()){
-					$this->writeObject($element);
 					$values[] = $element->getId();
 				}else if($listAnnotation->isCollection()){
 					$this->writeList($saveObject, $saveProperty, $element, $listDepth+1, $key);
@@ -700,8 +698,6 @@
 						if(!is_null(Photographer::getSnapshot($object,$propertyName)) && !Photographer::compareToSnapshot($object,$propertyName)){
 							$propertyValueMap[$propertyName] = $propertyValue->getId();
 						}
-					}else if($property->getAnnotation()->isDate()){
-						$propertyValueMap[$propertyName] = "{$propertyValue->getDatestamp()} {$propertyValue->getTimestamp()}";
 					}else if($property->getAnnotation()->isString()){
 						$propertyValueMap[$propertyName] = (string)$propertyValue;
 					}else{
@@ -735,35 +731,6 @@
 				
 				if($property->getAnnotation()->isCollection()){
 					$arguments[] = null;
-				}else if($property->getAnnotation()->isDate()){
-					$datePieces = preg_split("/[-: ]/", $data[$field]);
-					$newDate = new WadadliDate();
-					
-					if(sizeof($datePieces) > 0){
-						$newDate->setYear(intval($datePieces[0]));
-					}
-					
-					if(sizeof($datePieces) > 1){
-						$newDate->setMonth(intval($datePieces[1]));
-					}
-					
-					if(sizeof($datePieces) > 2){
-						$newDate->setDay(intval($datePieces[2]));
-					}
-					
-					if(sizeof($datePieces) > 3){
-						$newDate->setHours(intval($datePieces[3]));
-					}
-					
-					if(sizeof($datePieces) > 4){
-						$newDate->setMinutes(intval($datePieces[4]));
-					}
-					
-					if(sizeof($datePieces) > 5){
-						$newDate->setSeconds(intval($datePieces[5]));
-					}
-					
-					$arguments[] = $newDate;
 				}else if($property->getAnnotation()->isObject()){
 					//Make note of contained object for delayed loading
 					if(!array_key_exists($property->getName(), $this->objectMembers)){
@@ -823,10 +790,7 @@
 				$fields .= ",parentKey";
 			}
 			
-			$results = array();
-			if(DatabaseAdministrator::tableExists($listTable) && $parentIds){
-				$results = DatabaseAdministrator::execute("SELECT $fields FROM $listTable WHERE $parentColumn IN (".implode(",",$parentIds).")");
-			}
+			$results = DatabaseAdministrator::execute("SELECT $fields FROM $listTable WHERE $parentColumn IN (".implode(",",$parentIds).")");
 			
 			if($listAnnotation->isObject()){
 				$subGateway = new SQLGateway();
@@ -854,13 +818,7 @@
 					$collections[$result[$parentColumn]] = array();
 				}
 				
-				if($listAnnotation->isDate()){
-					$datePieces = preg_split("/[-: ]/", $result['value']);
-					$value = new WadadliDate(intval($datePieces[0]),intval($datePieces[1]),intval($datePieces[2]),
-										intval($datePieces[3]),intval($datePieces[4]),intval($datePieces[5]));
-					
-					$collections[$result[$parentColumn]][$result['name']] = $value;
-				}else if($listAnnotation->isObject()){
+				if($listAnnotation->isObject()){
 					if($result['value']){
 						$collections[$result[$parentColumn]][$result['name']] = $objects[$result['value']];
 					}else{

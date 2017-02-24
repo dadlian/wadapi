@@ -7,8 +7,6 @@
 		public $class;
 	}
 	
-	class Date extends WadadliAnnotation {}
-	
 	abstract class DefaultedAnnotation extends WadadliAnnotation{
 		public $default;
 	}

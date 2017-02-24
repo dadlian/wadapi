@@ -334,14 +334,11 @@
 				$getterMethod = "get".capitalise($propertyName);
 				$propertyValue = $object->$getterMethod();
 				
-				if(!$property->getAnnotation()->isDate() && !$property->getAnnotation()->isObject() && 
-					!$property->getAnnotation()->isCollection()){
+				if(!$property->getAnnotation()->isObject() && !$property->getAnnotation()->isCollection()){
 					$objectNode->addChild($propertyName, $propertyValue);
 				}
 				
-				if($property->getAnnotation()->isDate()){
-					$objectNode->addChild($propertyName, $propertyValue->getDatestamp()." ".$propertyValue->getTimestamp());
-				}else if($property->getAnnotation()->isObject()){
+				if($property->getAnnotation()->isObject()){
 					$this->insertObject($propertyValue, $objectNode, $propertyName);
 				}else if($property->getAnnotation()->isCollection()){
 					$this->insertList($propertyValue, $objectNode, $propertyName);
@@ -369,10 +366,8 @@
 				}
 				
 				//Add element node to list
-				if((!is_object($element) || get_class($element) == "WadadliDate") && !is_array($element)){
-					if(is_object($element) && get_class($element) == "WadadliDate"){
-						$listNode->addChild($elementName, $element->getDatestamp()." ".$element->getTimestamp());
-					}else if(is_bool($element)){
+				if(!is_object($element) && !is_array($element)){
+					if(is_bool($element)){
 						if(!$element){
 							$element = 0;
 						}

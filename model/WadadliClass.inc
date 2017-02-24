@@ -313,7 +313,7 @@
 						if(is_array($deleteValue)){
 							$match = $this->compareCollections($deleteValue, $element);
 						}
-					}else if($listType->isObject() || $listType->isDate()){
+					}else if($listType->isObject()){
 						if(is_object($deleteValue)){
 							$match = $deleteValue->equals($element);
 						}
@@ -432,7 +432,7 @@
 				
 				if($classProperties[$i]->getAnnotation()->isCollection()){
 					$equal = ($equal && $this->compareCollections($this->$getter(),$otherObject->$getter()));
-				}else if($classProperties[$i]->getAnnotation()->isObject() || $classProperties[$i]->getAnnotation()->isDate()){
+				}else if($classProperties[$i]->getAnnotation()->isObject()){
 					if(!is_null($this->$getter())){
 						$equal = ($equal && $this->$getter()->equals($otherObject->$getter()));
 					}else{
@@ -461,8 +461,6 @@
 				return 0;
 			}else if($annotation->isBoolean()){
 				return false;
-			}else if($annotation->isDate()){
-				return new WadadliDate(0,1,1,0,0,0);
 			}else if($annotation->isString()){
 				return "";
 			}else if($annotation->isObject()){

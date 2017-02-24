@@ -111,8 +111,7 @@
 				|| ($annotation->isFile() && $value && !file_exists(self::$projectPath."$value"))
 				|| ($annotation->isInteger() && !is_int($value))
 				|| (($annotation->isFloat() || $annotation->isMonetary()) && !is_numeric($value))
-				|| ($annotation->isBoolean() && !is_bool($value))
-				|| ($annotation->isDate() && !is_null($value) && (!is_object($value) || get_class($value) != "WadadliDate"))  
+				|| ($annotation->isBoolean() && !is_bool($value))  
 					&& $value != null){
 					if($annotation->isObject() && !is_null($value) && is_object($value)){
 						$valueObject = Mirror::reflectClass($value);

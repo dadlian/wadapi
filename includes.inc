@@ -86,7 +86,6 @@
 	require_once(dirname(__FILE__)."/model/system/Role.inc");
 	require_once(dirname(__FILE__)."/model/system/Settings.inc");
 	require_once(dirname(__FILE__)."/model/system/URLPattern.inc");
-	require_once(dirname(__FILE__)."/model/system/WadadliDate.inc");
 	require_once(dirname(__FILE__)."/model/system/WadadliMessage.inc");
 	require_once(dirname(__FILE__)."/model/system/Warrant.inc");
 	
