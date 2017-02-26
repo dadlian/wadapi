@@ -22,7 +22,7 @@
 		}
 		
 		protected static function closeCase($entity,$custom=true){
-			if(!self::$investigations[$entity] && !self::$customInvestigations[$entity]){
+			if(!array_key_exists($entity,self::$investigations) && !array_key_exists($entity,self::$customInvestigations)){
 				return;
 			}
 			

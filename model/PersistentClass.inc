@@ -16,6 +16,12 @@
 		private $loadedBits = array();
 		
 		/*
+		 * Indicates whether this object has already been written to the database
+		 */
+		/** @Boolean(required=true, default=false) */
+		private $persisted;
+		
+		/*
 		 * A unique integer identifying this object from other instances of the same class.
 		 */
 		/** @WadapiString(required=true, min=0, max=20)*/
@@ -58,7 +64,7 @@
 			
 			//Initialise Dirty Bits
 			foreach(Mirror::reflectClass(get_class($this))->getProperties(false) as $property){
-				if(!in_array($property,array('id','created','modified'))){
+				if(!in_array($property->getName(),array('id','created','modified'))){
 					$this->dirtyBits[$property->getName()] = true;
 					
 					if(!$property->getAnnotation()->isObject() && !$property->getAnnotation()->isCollection()){
@@ -90,10 +96,13 @@
 			}
 			
 			$instance->loadedBits["created"] = true;
-			$instance->loadedBits["modified"] = true;
+			$instance->loadedBits["modified"] = false;
 			
 			//A bound instance always starts clean
 			$instance->markClean();
+			
+			//A bound instance is by definition persisted
+			$instance->markPersisted();
 			
 			//Take a snapshot of the object stub (it will be retaken when the object is loaded)
 			Photographer::takeSnapshot($instance);
@@ -146,6 +155,11 @@
 				$this->loadedBits[$propertyName] = true;
 			}
 			
+			//If the modified time is being set, change the value and move one
+			if($propertyName === "modified"){
+				return;
+			}
+			
 			//See whether we should mark this field as dirty based on its original value
 			if(!Photographer::compareToSnapshot($this,$propertyName)){
 				$this->modified = strval(time());
@@ -155,10 +169,6 @@
 				}
 			}else{
 				$this->dirtyBits[$propertyName] = false;
-			}
-			
-			if(!$this->modified){
-				$this->modified = strval(time());
 			}
 			
 			return;
@@ -255,11 +265,7 @@
 			if($field){
 				$property = Mirror::reflectProperty($this,$field)->getAnnotation();
 				if($property->isObject()){
-					if($this->$field){
-						return $this->$field->isLoaded();
-					}else{
-						return false;
-					}
+					return is_null($this->$field)?false:true;
 				}else if($property->isCollection()){
 					return !is_null($this->$field);
 				}else{
@@ -274,6 +280,20 @@
 				
 				return true;
 			}
+		  }
+		  
+		  /*
+		   * Indicates whether or not this class has been persisted yet
+		   */
+		  protected function isPersisted(){
+			return $this->persisted;
+		  }
+		  
+		  /*
+		   * Marks the object as persisted
+		   */
+		  protected function markPersisted(){
+			return $this->persisted = true;
 		  }
 		 
 		 /*
@@ -321,6 +341,10 @@
 				}
 			}
 			
+			//Set created and modified time flags
+			$this->created = $object->created;
+			$this->modified = $object->modified;
+			
 			//Mark all fields as clean
 			foreach($this->dirtyBits as $field => $dirtyBit){
 				$this->dirtyBits[$field] = false;
@@ -333,8 +357,6 @@
 		}
 		
 		private function loadCollections($listAnnotation, $listTable, $parentIds, $parentColumn = "parentList"){
-			$collections = array();
-			
 			$fields = "$parentColumn,name";
 			if(!$listAnnotation->isCollection()){
 				$fields .= ",value";
@@ -357,11 +379,13 @@
 				$nestedCollections = $this->loadCollections($listTable."List", $listAnnotation->getContainedType(), $keys);
 			}
 			
-			foreach($results as $result){
-				if(!array_key_exists($result[$parentColumn], $collections)){
-					$collections[$result[$parentColumn]] = array();
-				}
+			$collections = array();
+			foreach($parentIds as $parentId){
+				$collections[$parentId] = array();
+			}
 				
+			
+			foreach($results as $result){
 				if($listAnnotation->isObject()){
 					if($result['value']){
 						//Set object stub for lazy loading

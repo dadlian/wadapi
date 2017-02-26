@@ -42,93 +42,57 @@
 		private static $includedClasses = array();
 		
 		public static function require_directory($directoryString){
-			$directory = opendir($directoryString);
-			$directoryContents = array();
-
-			while(($filename = readdir($directory)) !== FALSE) {
-				$directoryContents[] = $directoryString."/".$filename;
+			$fileListing = self::index_directory($directoryString);
+			foreach($fileListing as $class){
+				self::require_class($class,$fileListing);
 			}
+		}
+		
+		private static function index_directory($directoryString){
+			$directoryIndex = array();
 			
-			foreach($directoryContents as $content){
-				if(is_file($content) && (substr($content, strlen($content) - 3) == "inc" || substr($content, strlen($content) - 3) == "php")){
-					self::require_file($content);
-				}else if (is_dir($content) && substr($content, strlen($content) - 1) !== "." && substr($content, strlen($content) - 2) !== ".."){
-					self::require_directory($content);
+			$directory = opendir($directoryString);
+			while(($filename = readdir($directory)) !== FALSE) {
+				$nextItem = $directoryString."/".$filename;
+				
+				if(is_file($nextItem) && (substr($nextItem, strlen($nextItem) - 3) == "inc" || substr($nextItem, strlen($nextItem) - 3) == "php")){
+					$fileContents = file_get_contents($nextItem);
+					preg_match("/class\s+(\w+)(?:\s+extends\s+(\w+))?/", $fileContents, $matches);
+					
+					$className = "";
+					if(sizeof($matches) > 1){
+						$className = $matches[1];
+					}
+					
+					$parent = "";
+					if(sizeof($matches) > 2){
+						$parent = $matches[2];
+					}
+					
+					$directoryIndex[$className] = array("filename"=>$nextItem,"parent"=>$parent);
+				}else if (is_dir($nextItem) && substr($nextItem, strlen($nextItem) - 1) !== "." && substr($nextItem, strlen($nextItem) - 2) !== ".."){
+					$directoryIndex = array_merge($directoryIndex,self::index_directory($nextItem));
 				}
 			}
-
 			closedir($directory);
+			
+			return $directoryIndex;
 		}
 	
-		public static function require_file($filename){
+		private static function require_class($class,$fileListing){
+			$filename = $class['filename'];
+			$parent = $class['parent'];
+			
 			if(!file_exists($filename)){
 				fatal_error(RESOURCE_UNAVAILABLE_ERROR,"require_all() could not open file: $filename");
 				return;
 			}
 			
-			//See if file contains PHP class or not
-			$fileContents = file_get_contents($filename);
-			preg_match("/class\s+(\w+)/", $fileContents, $matches);
-			
-			if(sizeof($matches) > 1){
-				$fileParts = preg_split("/\//",$filename);
-				$filePath = str_replace($fileParts[sizeof($fileParts)-1],"",$filename);
-				self::require_class($matches[1], $filePath);
-			}else{		
-				require_once($filename);
+			if(array_key_exists($parent,$fileListing) && !class_exists($parent)){
+				self::require_class($fileListing[$parent],$fileListing);
 			}
+			
+			require_once($filename);
 		}
-
-		private static function require_class($className, $directory){			
-			//Ignore class if it has already been included
-			if(in_array($className,self::$includedClasses)){
-				return;
-			}
-			
-			if(!$includeFilename = self::find_class_file($className,$directory)){
-				if(!$includeFilename = self::find_class_file($className,"$directory/..")){
-					return false;
-				}
-			}
-			
-			//Check whether or not the class has a parent, and include the ancestor first if so
-			$classText = file_get_contents($includeFilename);
-			preg_match("/class\s+$className\s+extends\s+(\w+)/", $classText, $matches);		
-			if(sizeof($matches) > 1){
-				self::require_class($matches[1],$directory);
-			}
-
-			require_once($includeFilename);	
-			self::$includedClasses[] = $className;
-		}
-
-		private static function find_class_file($className, $directoryName){
-			$children = array($directoryName);
-			
-			while(sizeof($children) > 0){
-				$directoryName = array_shift($children);
-				$directory = opendir($directoryName);
-
-				if($directory){
-					while(($nextFile = readdir($directory)) !== FALSE){
-						$filePath = "$directoryName/$nextFile"; 
-						if(is_file($filePath)){
-							$fileContents = file_get_contents($filePath);
-							preg_match("/class\s+($className)[\s{]/", $fileContents, $matches);
-							
-							if(sizeof($matches) > 1){
-								return $filePath;
-							}
-						}else if($nextFile !== "." && $nextFile !== ".."){
-							array_push($children, $filePath);
-						}
-					}
-				}
-				
-				closedir($directory);
-			}
-			
-			return false;
-		}	
 	}
 ?>

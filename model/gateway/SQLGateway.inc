@@ -432,9 +432,9 @@
 			$arguments = func_get_args();
 			
 			//Update records parameter to 1 and call findUnique
-			$arguments[0] = $arguments[0]?$arguments[0]:"";
-			$arguments[1] = $arguments[1]?$arguments[1]:null;
-			$arguments[2] = $arguments[2]?$arguments[2]:null;
+			$arguments[0] = array_key_exists(0,$arguments)?$arguments[0]:"";
+			$arguments[1] = array_key_exists(1,$arguments)?$arguments[1]:null;
+			$arguments[2] = array_key_exists(2,$arguments)?$arguments[2]:null;
 			$arguments[3] = 1;
 			
 			$results = call_user_func_array(array($this,'find'), $arguments);
@@ -528,6 +528,7 @@
 			foreach($classHierarchy as $class){
 				$propertyList = $class->getProperties(false);
 				$propertyValueMap = $this->buildPropertyValueMap($propertyList, $saveObject);
+				
 				if($propertyValueMap){
 					$saveValues = array();
 					$classProperties = implode(",",array_keys($propertyValueMap));
@@ -556,6 +557,10 @@
 					
 					//Execute the save query and pass in the extracted parameters
 					call_user_func_array(array("DatabaseAdministrator","execute"), array_merge(array($saveQuery), $saveValues));
+				//Write classes without properties only when they are not already persisted
+				}else if(!$saveObject->isPersisted()){
+					DatabaseAdministrator::execute("INSERT INTO {$class->getName()}(id,created,modified) VALUES(?,?,?)",
+										$saveObject->getId(),$saveObject->getCreated(),$saveObject->getModified());
 				}
 				
 				//Save the object's collection properties
@@ -566,6 +571,10 @@
 					}
 				}
 			}
+			
+			//Having been written to the database this object is now clean and should be marked as persisted
+			$saveObject->markClean();
+			$saveObject->markPersisted();
 		}
 		
 		/*
@@ -632,7 +641,7 @@
 				}
 			
 				//Do not write list elements that have not changed
-				if($snapshot && $snapshot[$key] == $element){
+				if($snapshot && array_key_exists($key,$snapshot) && $snapshot[$key] == $element){
 					continue;
 				}
 				
@@ -743,11 +752,13 @@
 						}
 						
 						$this->objectMembers[$property->getName()][$data[$field]][] = $data['id'];
-					}
 					
-					//Set object stub for lazy loading
-					$containedClass = $property->getAnnotation()->getObjectClass();
-					$arguments[] = call_user_func_array(array($containedClass,"bindInstance"),array($data[$field],new SQLGateway()));
+						//Set object stub for lazy loading
+						$containedClass = $property->getAnnotation()->getObjectClass();
+						$arguments[] = call_user_func_array(array($containedClass,"bindInstance"),array($data[$field],new SQLGateway()));
+					}else{
+						$arguments[] = null;
+					}
 				}else if($property->getAnnotation()->isBoolean()){
 					$arguments[] = (bool)$data[$field];
 				}else if($property->getAnnotation()->isString()){
@@ -767,6 +778,9 @@
 				
 			//Loaded Objects always start as Clean
 			$object->markClean();
+			
+			//Loaded Objects are marked as persisted by default
+			$object->markPersisted();
 			
 			//Cache object before returning it
 			QuarterMaster::store($object);

@@ -49,7 +49,8 @@
 			
 			//Build Headers
 			header("Date: ".gmdate("D, d M Y H:i:s")." GMT");
-			foreach($this->getHeaders() as $header => $value){
+			$headers = $this->getHeaders()?$this->getHeaders():array();
+			foreach($headers as $header => $value){
 				header("$header: $value");
 			}
 			

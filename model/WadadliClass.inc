@@ -188,7 +188,9 @@
 		 * Generic getter method for any class property
 		 */
 		protected function getX($propertyName){
-			return $this->$propertyName;
+			//Prevent returning null for unitilalised arrays
+			$annotation = Mirror::reflectProperty($this,$propertyName)->getAnnotation();
+			return ($annotation->isCollection() && is_null($this->$propertyName))?array():$this->$propertyName;
 		}
 
 		/*
