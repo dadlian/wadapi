@@ -263,8 +263,10 @@
 					return is_null($this->$field)?false:true;
 				}else if($property->isCollection()){
 					return !is_null($this->$field);
-				}else{
+				}else if(array_key_exists($field,$this->loadedBits)){
 					return $this->loadedBits[$field];
+				}else{
+					return false;
 				}
 			}else{
 				foreach(Mirror::reflectClass($this)->getProperties(false) as $property){
