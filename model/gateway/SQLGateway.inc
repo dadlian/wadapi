@@ -632,7 +632,7 @@
 				$fields[] = 'parentKey';
 			}
 			
-			$placeholders = array();
+			$placeHolders = array();
 			$values = array();
 			foreach($propertyValue as $key => $element){
 				//Write any dirty object list elemenets to the database
