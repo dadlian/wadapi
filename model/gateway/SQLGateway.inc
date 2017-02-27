@@ -704,7 +704,7 @@
 						$this->writeObject($propertyValue);
 						
 						//Only rewrite object reference if it has changed
-						if(!is_null(Photographer::getSnapshot($object,$propertyName)) && !Photographer::compareToSnapshot($object,$propertyName)){
+						if(!Photographer::compareToSnapshot($object,$propertyName)){
 							$propertyValueMap[$propertyName] = $propertyValue->getId();
 						}
 					}else if($property->getAnnotation()->isString()){

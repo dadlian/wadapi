@@ -196,11 +196,7 @@
 			if($field){
 				$property = Mirror::reflectProperty($this,$field)->getAnnotation();
 				if($property->isObject()){
-					if($this->$field){
-						return $this->dirtyBits[$field] || $this->$field->isDirty();
-					}else{
-						return false;
-					}
+					return $this->dirtyBits[$field] || (is_null($this->$field)?false:$this->$field->isDirty());
 				}else if($property->isCollection()){
 					$leaves = $this->$field;
 					if(is_null($leaves)){
