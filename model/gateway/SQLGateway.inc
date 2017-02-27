@@ -793,8 +793,6 @@
 		  * Delayed loading of object collections to ensure a single query to each table
 		  */
 		 private function loadCollections($listTable, $listAnnotation, $parentIds, $parentColumn = "parentKey"){
-			$collections = array();
-			
 			$fields = "$parentColumn,name";
 			if(!$listAnnotation->isCollection()){
 				$fields .= ",value";
@@ -827,11 +825,12 @@
 				$nestedCollections = $this->loadCollections($listTable."List", $listAnnotation->getContainedType(), $keys);
 			}
 			
+			$collections = array();
+			foreach($parentIds as $parentId){
+				$collections[$parentId] = array();
+			}
+			
 			foreach($results as $result){
-				if(!array_key_exists($result[$parentColumn], $collections)){
-					$collections[$result[$parentColumn]] = array();
-				}
-				
 				if($listAnnotation->isObject()){
 					if($result['value']){
 						$collections[$result[$parentColumn]][$result['name']] = $objects[$result['value']];
