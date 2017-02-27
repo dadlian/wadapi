@@ -92,16 +92,11 @@
 	require_once(dirname(__FILE__)."/controller/utilities/WadapiRebuildDatabase.inc");
 	
 	//Initialise Custom Settings Files
-	Detective::investigate("Loading Settings");
 	if(isset($settings)){
 		SettingsManager::changeSource($settings);
 	}
-	Detective::closeCase("Loading Settings");
 	
 	//Include Wadadli Project Files
-	Detective::investigate("Including Project Files");
 	require_all(SettingsManager::getSetting("install","projectPath")."/controller");
 	require_all(SettingsManager::getSetting("install","projectPath")."/model");
-	require_all(SettingsManager::getSetting("install","projectPath")."/view");
-	Detective::closeCase("Including Project Files");
 ?>
