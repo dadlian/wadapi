@@ -21,7 +21,7 @@
 				$propertyName = $property->getName();
 				$getter = "get".capitalise($propertyName);
 				
-				if($field && $field != $propertyName){
+				if($field && $field != $propertyName && array_key_exists($object->getId(),self::$gallery)){
 					$snapshot[$propertyName] = self::$gallery[$object->getId()][$propertyName];
 				}else{
 					//Taking a snapshot of an object should not load it into memory if it is not already

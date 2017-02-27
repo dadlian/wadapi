@@ -60,11 +60,11 @@
 			}
 		}
 		
-		protected function getResourceObject($resourceClass,$resourceKeyField,$resourceKeyValue){
+		protected function getResourceObject($resourceClass,$resourceKeyField,$resourceKeyValue,$lazyLoad=true){
 			$sqlGateway = new SQLGateway();
 			$searcher = new Searcher();
 			$searcher->addCriterion($resourceKeyField,Criterion::EQUAL,$resourceKeyValue);
-			$resource = $sqlGateway->findUnique($resourceClass,$searcher);
+			$resource = $sqlGateway->findUnique($resourceClass,$searcher,new Sorter(),0,0,$lazyLoad);
 			
 			if(!$resource && !CryptKeeper::exhume($resourceKeyValue,$resourceClass)){
 				ResponseHandler::missing("There is presently no resource with the given URI.");

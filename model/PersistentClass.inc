@@ -149,7 +149,6 @@
 		 */
 		 protected function setX($propertyName, $newValue, $calledMethod){
 			parent::setX($propertyName, $newValue, $calledMethod);
-			
 			//Set Loaded Bit to True
 			if(array_key_exists($propertyName,$this->loadedBits)){
 				$this->loadedBits[$propertyName] = true;
@@ -330,6 +329,12 @@
 			$class = Mirror::reflectClass($className);
 			foreach($class->getProperties(false) as $property){
 				$propertyName = $property->getName();
+				
+				//No need to overwrite loaded data
+				if($this->loadedBits[$propertyName]){
+					continue;
+				}
+				
 				$this->$propertyName = $object->$propertyName;
 				
 				if(!$property->getAnnotation()->isCollection()){
