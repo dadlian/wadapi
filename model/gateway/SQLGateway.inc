@@ -605,8 +605,8 @@
 			}	
 			
 			//Remove unused keys from the persisted list (will not apply to newly created objects)
+			$storedElementDeleteQuery = "DELETE FROM $tableName WHERE $parentColumn = '{$saveObject->getId()}'";
 			if(!is_null($snapshot)){
-				$storedElementDeleteQuery = "DELETE FROM $tableName WHERE $parentColumn = '{$saveObject->getId()}'";
 				if($listDepth > 0){
 					$storedElementDeleteQuery .= " AND parentKey = '$parentKey'";
 				}
@@ -620,6 +620,8 @@
 					$storedElementDeleteQuery .= " AND name IN (".implode(",",array_fill(0,sizeof($staleKeys),"?")).")";
 					call_user_func_array(array("DatabaseAdministrator","execute"),array_merge(array($storedElementDeleteQuery),$staleKeys));
 				}
+			}else{
+				DatabaseAdministrator::execute($storedElementDeleteQuery);
 			}
 			
 			//Add and update elements to persisted list

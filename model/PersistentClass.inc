@@ -224,8 +224,10 @@
 					}
 					
 					return $this->dirtyBits[$field];
-				}else{
+				}else if(array_key_exists($field,$this->dirtyBits)){
 					return $this->dirtyBits[$field];
+				}else{
+					return true;
 				}
 			}else{
 				foreach($this->dirtyBits as $field => $dirtyBit){
@@ -260,7 +262,7 @@
 			if($field){
 				$property = Mirror::reflectProperty($this,$field)->getAnnotation();
 				if($property->isObject()){
-					return is_null($this->$field)?false:true;
+					return is_null($this->$field)?false:$this->$field->isLoaded();
 				}else if($property->isCollection()){
 					return !is_null($this->$field);
 				}else if(array_key_exists($field,$this->loadedBits)){
@@ -333,7 +335,7 @@
 				$propertyName = $property->getName();
 				
 				//No need to overwrite loaded data
-				if($this->loadedBits[$propertyName]){
+				if(array_key_exists($propertyName,$this->loadedBits) && $this->loadedBits[$propertyName]){
 					continue;
 				}
 				
