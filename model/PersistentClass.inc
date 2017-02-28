@@ -101,6 +101,14 @@
 			//A bound instance always starts clean
 			$instance->markClean();
 			
+			//Mark any empty child objects as clean
+			foreach(Mirror::reflectClass($instance)->getProperties(false) as $property){
+				$field = $property->getName();
+				if($property->getAnnotation()->isObject() && $instance->$field){
+					$instance->$field->markClean();
+				}
+			}
+			
 			//A bound instance is by definition persisted
 			$instance->markPersisted();
 			
@@ -330,8 +338,12 @@
 				return;
 			}
 			
+			//Find list all class properties including those of parents
 			$class = Mirror::reflectClass($className);
-			foreach($class->getProperties(false) as $property){
+			$persistentClass = Mirror::reflectClass("PersistentClass");
+			$propertyList = array_diff($class->getProperties(),$persistentClass->getProperties());
+			
+			foreach($propertyList as $property){
 				$propertyName = $property->getName();
 				
 				//No need to overwrite loaded data
@@ -352,6 +364,11 @@
 			
 			//Mark all fields as clean
 			foreach($this->dirtyBits as $field => $dirtyBit){
+				//Values defiend by the user before loading should be kept as dirty
+				if(array_key_exists($field,$this->loadedBits) && $this->loadedBits[$field]){
+					continue;
+				}
+				
 				$this->dirtyBits[$field] = false;
 			}
 			

@@ -152,7 +152,8 @@
 					//Convert parameters as necessary based on property type
 					for($i=0; $i < sizeof($values); $i++){
 						if($annotation->isFloat() || $annotation->isMonetary()){
-							$decimals = strlen(end(preg_split("/\./",strval($values[$i]))));
+							$digitParts = preg_split("/\./",strval($values[$i]));
+							$decimals = strlen($digitParts[sizeof($digitParts)-1]);
 							$field = "ROUND($field,$decimals)";
 						}
 					}

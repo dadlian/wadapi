@@ -8,6 +8,12 @@
 			
 			if(!$this->getSlug()){
 				$this->setSlug($this->getId());
+				
+				//If the class is not fully loaded, this slug is temporary only
+				if(!$this->isLoaded()){
+					$this->loadedBits["slug"] = false;
+					$this->dirtyBits["slug"] = false;
+				}
 			}
 		}
 		
