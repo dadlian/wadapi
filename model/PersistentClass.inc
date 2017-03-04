@@ -95,7 +95,7 @@
 				$instance->loadedBits[$field] = false;
 			}
 			
-			$instance->loadedBits["created"] = true;
+			$instance->loadedBits["created"] = false;
 			$instance->loadedBits["modified"] = false;
 			
 			//A bound instance always starts clean
