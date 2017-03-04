@@ -333,8 +333,6 @@
 			$object = $this->gateway->findUnique($className,$searcher);
 			
 			if(!$object){
-				fatal_error(DATA_ACCESS_ERROR, "Instance of class ".get_class($this)." has an invalid binding ".
-								"(Gateway: ".get_class($this->getGateway()).", ID: {$this->getId()}).");
 				return;
 			}
 			
