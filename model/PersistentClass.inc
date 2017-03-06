@@ -169,7 +169,11 @@
 			
 			//See whether we should mark this field as dirty based on its original value
 			if(!Photographer::compareToSnapshot($this,$propertyName)){
-				$this->modified = strval(time());
+				//Don't change the modified stamp if a collection changes as the object table will not be updated
+				$annotation = Mirror::reflectProperty($this,$propertyName)->getAnnotation();
+				if(!$annotation->isCollection()){
+					$this->modified = strval(time());
+				}
 				
 				if(array_key_exists($propertyName,$this->dirtyBits)){
 					$this->dirtyBits[$propertyName] = true;
