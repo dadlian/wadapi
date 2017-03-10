@@ -146,6 +146,7 @@
 				//Take a snapshot of the recently loaded collection
 				Photographer::takeSnapshot($this,$searchProperty);
 				
+				$this->loadedBits[$searchProperty] = true;
 				$this->dirtyBits[$searchProperty] = false;
 			}
 			
@@ -344,13 +345,14 @@
 			$class = Mirror::reflectClass($className);
 			$persistentClass = Mirror::reflectClass("PersistentClass");
 			$propertyList = array_diff($class->getProperties(),$persistentClass->getProperties());
+			$presetData = array();
 			
 			foreach($propertyList as $property){
 				$propertyName = $property->getName();
 				
-				//No need to overwrite loaded data
+				//Store user set data so it can be restored after object load
 				if(array_key_exists($propertyName,$this->loadedBits) && $this->loadedBits[$propertyName]){
-					continue;
+					$presetData[$propertyName] = $this->$propertyName;
 				}
 				
 				$this->$propertyName = $object->$propertyName;
@@ -378,6 +380,12 @@
 			
 			//Replace the stub snapshot with a snapshot of the full class
 			Photographer::takeSnapshot($this);
+			
+			//Restore data that was preset by the user
+			foreach($presetData as $propertyName => $propertyValue){
+				$setter = "set".capitalise($propertyName);
+				$this->$setter($propertyValue);
+			}
 		}
 		
 		private function loadCollections($listAnnotation, $listTable, $parentIds, $parentColumn = "parentList"){
