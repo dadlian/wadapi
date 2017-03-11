@@ -136,15 +136,19 @@
 			}
 			
 			if($annotation->isCollection() && is_null($this->$searchProperty)){
-				$this->$searchProperty = $this->loadCollections(
-					$annotation->getContainedType(), //ListAnnotation
-					get_class($this).capitalise($searchProperty), //ListTable
-					array($this->getId()), //Current Object ID
-					strtolower(get_class($this)) //ParentTable
-				)[$this->getId()];
-			
-				//Take a snapshot of the recently loaded collection
-				Photographer::takeSnapshot($this,$searchProperty);
+				if($this->isPersisted()){
+					$this->$searchProperty = $this->loadCollections(
+						$annotation->getContainedType(), //ListAnnotation
+						get_class($this).capitalise($searchProperty), //ListTable
+						array($this->getId()), //Current Object ID
+						strtolower(get_class($this)) //ParentTable
+					)[$this->getId()];
+				
+					//Take a snapshot of the recently loaded collection
+					Photographer::takeSnapshot($this,$searchProperty);
+				}else{
+					$this->$searchProperty = array();
+				}
 				
 				$this->loadedBits[$searchProperty] = true;
 				$this->dirtyBits[$searchProperty] = false;
