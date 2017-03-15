@@ -152,7 +152,8 @@
 			
 			foreach($collection as $key => $element){
 				if($listType->isCollection()){
-					if(!self::takeCollectionSnapshot($listType->getContainedType(),$element)){
+					$subsnapshot = array_key_exists($key,$snapshot)?$snapshot[$key]:null;
+					if(!self::compareCollectionToSnapshot($listType->getContainedType(),$element,$subsnapshot)){
 						return false;
 					}
 				}else if($listType->isObject()){

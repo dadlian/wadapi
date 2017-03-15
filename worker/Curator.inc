@@ -178,20 +178,19 @@
 				}
 				
 				//Specify Primary Key Constraint
-				$createStatement .= "PRIMARY KEY(".strtolower($className).",name)";
+				$keyFields = array();
+				$keyFields[] = strtolower($className);
+				if($i > 0){
+					$keyFields[] = "parentKey";
+				}
+				$keyFields[] = "name";
+				$createStatement .= "PRIMARY KEY(".implode(",",$keyFields).")";
 				
 				//Specify owning object column constraint
 				$tableAbbr = substr(strtolower($tableName), 0, 15).substr(strtolower($tableName), strlen($tableName)-10,strlen($tableName));
 				$constraintName = "fk_".SettingsManager::getSetting("database","tableprefix")."_".$tableAbbr."_".substr(strtolower($className),0,20);
 				$createStatement .= ",CONSTRAINT $constraintName FOREIGN KEY (".strtolower($className).") REFERENCES $className (id)".
 							" ON UPDATE CASCADE ON DELETE CASCADE)ENGINE=INNODB";
-				
-				if($i > 0){
-					$constraintName = "fk_".SettingsManager::getSetting("database","tableprefix")."_".$tableAbbr."_parentKey";
-					$createStatement .= ",CONSTRAINT $constraintName FOREIGN KEY (parentKey) REFERENCES ".
-							     substr($tableName, 0, strlen($tableName) - 4).
-							     " (name) ON UPDATE CASCADE ON DELETE CASCADE)ENGINE=INNODB";
-				}
 				
 				DatabaseAdministrator::execute($createStatement);
 			}

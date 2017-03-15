@@ -392,18 +392,14 @@
 			}
 		}
 		
-		private function loadCollections($listAnnotation, $listTable, $parentIds, $parentColumn = "parentList"){
+		private function loadCollections($listAnnotation, $listTable, $parentIds, $parentColumn = "parentKey"){
 			$fields = "$parentColumn,name";
 			if(!$listAnnotation->isCollection()){
 				$fields .= ",value";
 			}
 			
-			if($parentColumn == "parentKey"){
-				$fields .= ",parentKey";
-			}
-			
 			$results = array();
-			$results = DatabaseAdministrator::execute("SELECT $fields FROM $listTable WHERE $parentColumn IN (".implode(",",$parentIds).")");
+			$results = DatabaseAdministrator::execute("SELECT $fields FROM $listTable WHERE $parentColumn IN ('".implode("','",$parentIds)."')");
 			
 			if($listAnnotation->isCollection()){
 				$keys = array();
@@ -412,7 +408,9 @@
 					$keys[] = $result['name'];
 				}
 				
-				$nestedCollections = $this->loadCollections($listTable."List", $listAnnotation->getContainedType(), $keys);
+				if($keys){
+					$nestedCollections = $this->loadCollections($listAnnotation->getContainedType(), $listTable."List", $keys);
+				}
 			}
 			
 			$collections = array();
@@ -431,8 +429,8 @@
 						$collections[$result[$parentColumn]][$result['name']] = null;
 					}
 				}else if($listAnnotation->isCollection()){
-					if(array_key_exists($result['id'], $nestedCollections)){
-						$collections[$result[$parentColumn]][$result['name']] = $nestedCollections[$result['id']];
+					if(array_key_exists($result['name'], $nestedCollections)){
+						$collections[$result[$parentColumn]][$result['name']] = $nestedCollections[$result['name']];
 					}else{
 						$collections[$result[$parentColumn]][$result['name']] = array();
 					}

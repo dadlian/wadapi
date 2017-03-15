@@ -513,8 +513,8 @@
 		 * Performs the SQL Query to either insert or update an object to the database
 		 */
 		 public function writeObject($saveObject){
-			//No need to save clean objects to the database
-			if(!$saveObject->isDirty()){
+			//No need to save clean objects to the database, unless they have not yet been persisted
+			if($saveObject->isPersisted() && !$saveObject->isDirty()){
 				return;
 			}
 			
@@ -602,19 +602,24 @@
 			for($i = 0; $i < $listDepth; $i++){
 				$tableName .= "List";
 				$listAnnotation = $listAnnotation->getContainedType();
-				$snapshot = is_null($snapshot)?$snapshot:$snapshot[$parentKey];
+				$snapshot = is_null($snapshot)?$snapshot:(array_key_exists($parentKey,$snapshot)?$snapshot[$parentKey]:null);
 			}	
 			
 			//Remove unused keys from the persisted list (will not apply to newly created objects)
 			$storedElementDeleteQuery = "DELETE FROM $tableName WHERE $parentColumn = '{$saveObject->getId()}'";
-			if(!is_null($snapshot)){
-				if($listDepth > 0){
-					$storedElementDeleteQuery .= " AND parentKey = '$parentKey'";
-				}
+			if($listDepth > 0){
+				$storedElementDeleteQuery .= " AND parentKey = '$parentKey'";
+			}
 			
+			if(!is_null($snapshot)){
 				$staleKeys = array_diff(array_keys($snapshot),array_keys($propertyValue));
 				foreach($staleKeys as $index => $staleKey){
 					$staleKeys[$index] = strval($staleKey);
+					
+					//Remove stale nested entries if necessary
+					if($listAnnotation->isCollection()){
+						$this->writeList($saveObject, $saveProperty, array(), $listDepth+1, $staleKey);
+					}
 				}
 				
 				if($staleKeys){
@@ -648,17 +653,20 @@
 					continue;
 				}
 				
-				$placeHolders[] = "(".implode(",",array_fill(0,($listDepth == 0)?3:4,"?")).")";
 				$values[] = $saveObject->getId();
 				$values[] = strval($key);
 				
+				$placeHolderLength = ($listDepth == 0)?3:4;
 				 if($listAnnotation->isObject()){
 					$values[] = $element->getId();
 				}else if($listAnnotation->isCollection()){
+					$placeHolderLength--;
 					$this->writeList($saveObject, $saveProperty, $element, $listDepth+1, $key);
 				}else{
 					$values[] = $element;
 				}
+				
+				$placeHolders[] = "(".implode(",",array_fill(0,$placeHolderLength,"?")).")";
 				
 				if($listDepth > 0){
 					$values[] = $parentKey;
@@ -801,11 +809,7 @@
 				$fields .= ",value";
 			}
 			
-			if($parentColumn == "parentKey"){
-				$fields .= ",parentKey";
-			}
-			
-			$results = DatabaseAdministrator::execute("SELECT $fields FROM $listTable WHERE $parentColumn IN (".implode(",",$parentIds).")");
+			$results = DatabaseAdministrator::execute("SELECT $fields FROM $listTable WHERE $parentColumn IN ('".implode("','",$parentIds)."')");
 			
 			if($listAnnotation->isObject()){
 				$subGateway = new SQLGateway();
@@ -841,8 +845,8 @@
 						$collections[$result[$parentColumn]][$result['name']] = null;
 					}
 				}else if($listAnnotation->isCollection()){
-					if(array_key_exists($result['id'], $nestedCollections)){
-						$collections[$result[$parentColumn]][$result['name']] = $nestedCollections[$result['id']];
+					if(array_key_exists($result['name'], $nestedCollections)){
+						$collections[$result[$parentColumn]][$result['name']] = $nestedCollections[$result['name']];
 					}else{
 						$collections[$result[$parentColumn]][$result['name']] = array();
 					}
