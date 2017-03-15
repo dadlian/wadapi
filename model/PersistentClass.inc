@@ -399,7 +399,8 @@
 			}
 			
 			$results = array();
-			$results = DatabaseAdministrator::execute("SELECT $fields FROM $listTable WHERE $parentColumn IN ('".implode("','",$parentIds)."')");
+			$results = DatabaseAdministrator::execute("SELECT $fields FROM $listTable WHERE ".strtolower(get_class($this))." = {$this->getId()} AND ".
+									"$parentColumn IN ('".implode("','",$parentIds)."')");
 			
 			if($listAnnotation->isCollection()){
 				$keys = array();

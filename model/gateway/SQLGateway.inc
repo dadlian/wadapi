@@ -803,13 +803,18 @@
 		 /*
 		  * Delayed loading of object collections to ensure a single query to each table
 		  */
-		 private function loadCollections($listTable, $listAnnotation, $parentIds, $parentColumn = "parentKey"){
+		 private function loadCollections($listTable, $listAnnotation, $parentIds, $parentColumn = "parentKey", $rootColumn="", $rootId=0){
 			$fields = "$parentColumn,name";
 			if(!$listAnnotation->isCollection()){
 				$fields .= ",value";
 			}
 			
-			$results = DatabaseAdministrator::execute("SELECT $fields FROM $listTable WHERE $parentColumn IN ('".implode("','",$parentIds)."')");
+			$findQuery = "SELECT $fields FROM $listTable WHERE $parentColumn IN ('".implode("','",$parentIds)."')";
+			if($rootColumn){
+				$findQuery .= " AND $rootColumn = $rootId";
+			}
+			
+			$results = DatabaseAdministrator::execute($findQuery);
 			
 			if($listAnnotation->isObject()){
 				$subGateway = new SQLGateway();
@@ -829,7 +834,9 @@
 					$keys[] = $result['name'];
 				}
 				
-				$nestedCollections = $this->loadCollections($listTable."List", $listAnnotation->getContainedType(), $keys);
+				$rootColumn = $rootColumn?$rootColumn:$parentColumn;
+				$rootId = $rootId?$rootId:$parentIds[0];
+				$nestedCollections = $this->loadCollections($listTable."List", $listAnnotation->getContainedType(), $keys, "parentKey", $rootColumn, $rootId);
 			}
 			
 			$collections = array();
