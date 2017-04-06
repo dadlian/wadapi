@@ -29,7 +29,20 @@
 				ResponseHandler::forbidden("The provided tokens do not have permission to perform this action.");
 			}
 			
+			//Rebuild Database
 			Curator::rebuildDatabase();
+			
+			//Initialise Root API Token if necessary
+			$rootKey = md5(SettingsManager::getSetting("api","key"));
+			$rootSecret = md5(SettingsManager::getSetting("api","secret"));
+			
+			$sqlGateway = new SQLGateway();
+			$searcher = new Searcher();
+			$searcher->addCriterion("accessKey",Criterion::EQUAL,$rootKey);
+			$searcher->addCriterion("accessSecret",Criterion::EQUAL,$rootSecret);
+			if(!$sqlGateway->findUnique("APIToken",$searcher)){
+				$sqlGateway->save(new APIToken("root",0,$rootKey,$rootSecret,md5($rootKey.$rootSecret)));
+			}
 			
 			$message = "Database Rebuilt Successfully";
 			ResponseHandler::created($this->assemblePayload($message),$this->getBase()."/wadapi/rebuild");
