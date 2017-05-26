@@ -12,3 +12,4 @@ exclude.txt
 wadapi_setup.txt
 profiler/doc
 .selected_editor
+media
