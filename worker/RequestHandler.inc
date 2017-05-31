@@ -304,7 +304,11 @@
 			$getter = "get".capitalise($setting);
 			$endpointAcceptables = $endpoint->$getter();
 			$supportedValues = array_values($endpointAcceptables?$endpointAcceptables:explode(",",SettingsManager::getSetting("api",$setting)));
-			$defaultValue = $supportedValues?$supportedValues[0]:"*"; 
+			$defaultValue = $supportedValues?$supportedValues[0]:"*";
+
+			if($setting == "languages"){
+				$supportedValues = ["*"];
+			}
 
 			$headers = getallheaders();
 			$acceptHeader = array_key_exists($header,$headers)?$headers[$header]:$defaultValue;
