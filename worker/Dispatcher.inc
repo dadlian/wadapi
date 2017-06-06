@@ -36,7 +36,7 @@
 				$isValidRefresh = $isValidKey && $token->getRefreshSecret() == md5($accessSecret);
 				$isRefreshRequest = preg_match("/^access\/[0-9]+\/tokens$/",RequestHandler::getRequestURI());
 				$isValidRole = $isValidKey && ($token->getRole() == "root" || RequestHandler::getEndpoint()->viewFromRoles($token->getRole()));
-				$isEnabled = !$token->isDisabled();
+				$isEnabled = $isValidKey && !$token->isDisabled();
 				$isRoot = $isValidRole && $token->getRole() == "root";
 				$activeRole = $isValidRole?RequestHandler::getEndpoint()->viewFromRoles($token->getRole()):null;
 
