@@ -235,7 +235,7 @@
 			self::$isUtility = false;
 
 			//Handle Native Wadapi Calls. These override calls to the same endpoint in the userspace, if any.
-			$requestURI = substr(preg_replace("/\?".preg_replace("/\//","\/",preg_quote($_SERVER['QUERY_STRING']))."/","",$_SERVER['REQUEST_URI']),1);
+			$requestURI = self::extractRequestURI();
 			switch($requestURI){
 				case "wadapi/rebuild":
 					self::$endpoint = new Endpoint("Wadapi Database Rebuilder",$requestURI,"WadapiRebuildDatabase",array(),array(),array(),array(),array(),array());
@@ -292,9 +292,10 @@
 		}
 
 		private static function parseAcceptHeader($header,$setting,$type){
-			//Overide Global Acceptables Setting with Endpoint Settings if they exist
 			$endpointsGateway = new EndpointsGateway();
-			$requestURI = substr(preg_replace("/\?".preg_replace("/\//","\/",preg_quote($_SERVER['QUERY_STRING']))."/","",$_SERVER['REQUEST_URI']),1);
+			$requestURI = self::extractRequestURI();
+
+			//Overide Global Acceptables Setting with Endpoint Settings if they exist
 			$endpoint = self::$endpoint?self::$endpoint:$endpointsGateway->findUnique('path',$requestURI);
 
 			if(!$endpoint){
@@ -345,6 +346,22 @@
 			}else{
 				return array();
 			}
+		}
+
+		private static function extractRequestURI(){
+			//Load URL Root from settings
+			$urlRoot = preg_replace("/\//","\/",SettingsManager::getSetting("install","urlroot"));
+
+			//Remove URL Root from Request URI
+			$requestURI = preg_replace("/$urlRoot/","",$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']);
+
+			//Remove Query String from Request URI
+			$requestURI = preg_replace("/\?".preg_replace("/\//","\/",preg_quote($_SERVER['QUERY_STRING']))."/","",$requestURI);
+
+			//Remove leading slash from Request URI
+			$requestURI = preg_replace("/^\//","",$requestURI);
+
+			return $requestURI;
 		}
 	}
 ?>
