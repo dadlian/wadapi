@@ -9,18 +9,18 @@
 			$debugs = array();
 			$argumentCount = sizeof(func_get_args());
 			$argumentList = func_get_args();
-			
+
 			//Determine if all required properties are passed to constructor. Create blank values for those not specified.
 			$class = Mirror::reflectClass($this);
 			$classProperties = $class->getProperties();
-			
+
 			if($argumentCount < sizeof($classProperties)){
 				for($i = $argumentCount; $i < sizeof($classProperties); $i++){
 					$annotation = $classProperties[$i]->getAnnotation();
-					
+
 					//Set type specific default values
 					$nextArgument = $this->getDefault($annotation);
-					
+
 					//Update defaults under certain conditions
 					if($annotation->getDefault()){
 						$nextArgument = $annotation->getDefault();
@@ -39,11 +39,11 @@
 						$objectClass = $annotation->getObjectClass();
 						$nextArgument = new $objectClass();
 					}
-					
+
 					$argumentList[] = $nextArgument;
 				}
 			}
-			
+
 			//Assign the nth constructor argument to the nth class property, starting with inherited properties.
 			for($i = 0; $i < sizeof($classProperties); $i++){
 				$propertyName = $classProperties[$i]->getName();
@@ -51,29 +51,29 @@
 				$this->$methodName($argumentList[$i]);
 			}
 		}
-		
+
 		/*
 		 * Method is invoked when an undefined method is called on this class
 		 */
 		public function __call($method, $arguments){
 			$class = Mirror::reflectClass($this);
-			
+
 			//Initialise an array of minimum arguments if none are specified
 			$arguments = array_pad($arguments,2,null);
-			
+
 			//Handle single item accessors
 			if(preg_match("/^(get|set)([A-Z]\w*)/", $method, $matches)){
 				//Create a dummy argument if none was provided
 				$arguments = array_pad($arguments,1,null);
-				
+
 				//Initialise parameters for method call
 				$accessor = "{$matches[1]}X";
 				$property = $matches[2];
-				
+
 				//Pre-process accessor parameters
 				$errors = array();
 				$debugs = array();
-				
+
 				if(!$class->hasProperty($property) && !$class->hasProperty(decapitalise($property))){
 					if($class->hasMethod($method)){
 						return call_user_func_array(array($this,$method), $arguments);
@@ -82,7 +82,7 @@
 						$debugs[] = "Call to undefined method {$class->getName()}::{$matches[1]}$property().";
 					}
 				}
-				
+
 				if($class->hasProperty(decapitalise($property))){
 					$property = decapitalise($property);
 				}
@@ -99,33 +99,33 @@
 				if($class->hasMethod($method)){
 					return call_user_func_array(array($this,$method), $arguments);
 				}
-				
+
 				$action = $matches[1];
 				$property = $matches[2];
-				
+
 				$annotation = null;
 				if($class->hasProperty(decapitalise($property))){
 					$annotation = Mirror::reflectProperty($this, decapitalise($property))->getAnnotation();
 				}
-				
+
 				if($annotation && !$annotation->isBoolean()){
 					if($action == 'is'){
 						$actionName = "assert";
 					}else if($action == "toggle"){
 						$actionName = "toggle";
 					}
-					
+
 					fatal_error(DATA_ACCESS_ERROR,"Cannot $actionName ".decapitalise($property).", it is a ".$annotation->getType().".");
 					return;
 				}
-				
+
 				if($action == 'is'){
 					$getter = "get$property";
 					return $this->$getter();
 				}else if($action == "toggle"){
 					$getter = "get$property";
 					$setter = "set$property";
-					
+
 					$this->$setter(!$this->$getter());
 					return;
 				}
@@ -133,17 +133,17 @@
 			}else if(preg_match("/^(([a-z]+)(To|From))([A-Z]\w*)/", $method, $matches)){
 				//Create dummy arguments if none were provided
 				$arguments = array_pad($arguments,2,null);
-				
+
 				//Initialise parameters for method call
 				$accessor = "{$matches[1]}X";
 				$action = $matches[2];
 				$direction = decapitalise($matches[3]);
 				$property = $matches[4];
-				
+
 				//Pre-process accessor parameters
 				$errors = array();
 				$debugs = array();
-				
+
 				if(!$class->hasProperty($property) && !$class->hasProperty(decapitalise($property))){
 					if($class->hasMethod($method)){
 						return call_user_func_array(array($this,$method), $arguments);
@@ -152,18 +152,18 @@
 						$debugs[] = "Call to undefined method {$class->getName()}::$method().";
 					}
 				}
-				
+
 				if($class->hasProperty(decapitalise($property))){
 					$property = decapitalise($property);
 					$propertyObject = Mirror::reflectProperty($this, $property);
-					
+
 					if(!$propertyObject->getAnnotation()->isCollection()){
 						$errors[] = DATA_MODIFY_ERROR;
 						$debugs[] = "Can only $action elements $direction Collections. ".
 								"Property '$property' is a {$propertyObject->getAnnotation()->getType()}.";
 					}
 				}
-				
+
 				//Call auto-generated method if its parameters are error-free
 				if(!empty($errors)){
 					fatal_error($errors, $debugs);
@@ -175,7 +175,7 @@
 					}
 				}
 			}
-			
+
 			//If no auto-generated methods were called, see if method has been defined and let call through
 			if($class->hasMethod($method)){
 				return call_user_func_array(array($this,$method), $arguments);
@@ -200,11 +200,11 @@
 			//Initialise reflection objects
 			$class = get_class($this);
 			$property = Mirror::reflectProperty(get_class($this), $propertyName);
-			
+
 			$errors = array();
 			$debugs = array();
-			
-			
+
+
 			//See whether property can be null or not. If null, assign a default value, when it exists
 			if($property->getAnnotation()->isRequired() && is_null($newValue)){
 				if($property->getAnnotation()->getDefault()){
@@ -218,45 +218,45 @@
 					$debugs[] = "Null value given for required property '$propertyName' of $class.";
 				}
 			}
-			
+
 			//Check whether specified value is of the correct type for this property
 			if(!$property->isValidType($newValue) && !is_null($newValue)){
 				$expectedType = $property->getAnnotation()->getType();
 				if($property->getAnnotation()->isCollection()){
 					$expectedElement = $property->getAnnotation()->getContainedType()->getType();
-					if($expectedElement == "Object"){
+					if($expectedElement == "WadapiObject"){
 						$expectedElement = $property->getAnnotation()->getContainedType()->getObjectClass();
 					}
 					$expectedType = "$expectedElement array";
 				}else if($property->getAnnotation()->isObject()){
 					$expectedType = "Object of class {$property->getAnnotation()->getObjectClass()}";
 				}
-				
+
 				$errors[] = DATA_MODIFY_ERROR;
 				$debugs[] = "Invalid argument '$newValue' supplied for $class::$calledMethod(). $expectedType expected.";
 			}
-			
+
 			//Check whether the specified value is a valid enumerated value for the property, if applicable.
 			if(!$property->isEnumeratedValue($newValue)){
 				$errors[] = DATA_MODIFY_ERROR;
 				$debugs[] = "Value given for property '$propertyName' of $class must be one of (".
 						implode(", ", $property->getAnnotation()->getValues()).").";
 			}
-			
+
 			//Check whether the specified value falls within the specified range, if applicable.
 			if(!$property->inRange($newValue)){
 				$errors[] = DATA_MODIFY_ERROR;
 				$debugs[] = "Out of range value '$newValue' given for property '$propertyName' of $class. Value must be in the range ".
 						"[{$property->getAnnotation()->getMin()},{$property->getAnnotation()->getMax()}].";
 			}
-			
+
 			if(!empty($errors)){
 				fatal_error($errors, $debugs);
 			}else{
 				$this->$propertyName = $newValue;
 			}
 		}
-		
+
 		/*
 		 * Generic add method for appending a list of new elements to the end of a collection
 		 */
@@ -264,10 +264,10 @@
 			//Initiliase reflection objects
 			$class = get_class($this);
 			$property = Mirror::reflectProperty($class, $propertyName);
-			
+
 			$errors = array();
 			$debugs = array();
-			
+
 			if(!is_array($insertValues)){
 				$insertValues = array($insertValues);
 			}
@@ -277,40 +277,40 @@
 				$debugs[] = "Invalid argument supplied for $class::$methodName(). ".
 						"{$property->getAnnotation()->getContainedType()->getType()} expected.";
 		 	}
-		 	
+
 		 	if(!empty($errors)){
 				fatal_error($errors, $debugs);
 		 	}else{
 				$getter = "get".capitalise($propertyName);
 				$tempArray = $this->$getter();
-				
+
 				foreach($insertValues as $insertValue){
 					 $tempArray[] = $insertValue;
 				}
-				
+
 				$setter = "set".capitalise($propertyName);
 				$this->$setter($tempArray);
 			}
 		 }
-		
+
 		 /*
 		  * Generic drop method for deleting a group of elements from a list based on their values
 		  */
-		 protected function dropFromX($methodName, $propertyName, $deleteValues){			
+		 protected function dropFromX($methodName, $propertyName, $deleteValues){
 			if(!is_array($deleteValues) || sizeof($deleteValues) == 1){
 				$deleteValues = array($deleteValues);
 			}
-			
+
 			foreach($deleteValues as $deleteValue){
-				$tempArray = array();	
+				$tempArray = array();
 				$getter = "get".capitalise($propertyName);
-				
+
 				$elements = $this->$getter();
 				foreach($elements as $key => $element){
 					$match = false;
 					$property = Mirror::reflectProperty(get_class($this), $propertyName);
 					$listType = $property->getAnnotation()->getContainedType();
-					
+
 					if($listType->isCollection()){
 						if(is_array($deleteValue)){
 							$match = $this->compareCollections($deleteValue, $element);
@@ -322,17 +322,17 @@
 					}else{
 						$match = ($deleteValue === $element);
 					}
-					
+
 					if(!$match){
 						$tempArray[$key] = $element;
 					}
 				}
-				
+
 				$setter = "set".capitalise($propertyName);
 				$this->$setter($tempArray);
 			}
-		 }		 
-		 
+		 }
+
 		/*
 		 * Generic method takes a key and value and inserts it into the given collection. If the
 		 * key is already in the Collection, its value will be replaced.
@@ -341,16 +341,16 @@
 			//Initiliase reflection objects
 			$class = get_class($this);
 			$property = Mirror::reflectProperty($this, $propertyName);
-			
+
 			$errors = array();
 			$debugs = array();
-			
+
 		 	if(!$property->isValidType(array($insertValue))){
 				$errors[] = DATA_MODIFY_ERROR;
 				$debugs[] = "Invalid argument supplied for $class::$methodName(). ".
 						"{$property->getAnnotation()->getContainedType()->getType()} expected.";
 		 	}
-		 	
+
 		 	//Verify key is valid
 		 	if(!is_int($insertKey) && !is_string($insertKey)){
 				$errors[] = DATA_MODIFY_ERROR;
@@ -363,24 +363,24 @@
 				$getter = "get".capitalise($propertyName);
 				$tempArray = $this->$getter();
 				$tempArray[$insertKey] = $insertValue;
-				
+
 				$setter = "set".capitalise($propertyName);
 				$this->$setter($tempArray);
 		 	}
 		}
-		 
+
 		/*
 		 * Returns the value of a collection's element stored at the given key, if one exists.
-		 * Null otherwise. The 'remove' parameter determines whether the returned element is 
+		 * Null otherwise. The 'remove' parameter determines whether the returned element is
 		 * removed from the collection or not.
 		 */
 		protected function viewFromX($methodName, $propertyName, $viewKey, $remove=false){
 			//Initiliase reflection objects
 			$class = get_class($this);
-			
+
 			$errors = array();
 			$debugs = array();
-		 	
+
 		 	//Verify key is valid
 		 	if(!is_int($viewKey) && !is_string($viewKey)){
 				$errors[] = DATA_ACCESS_ERROR;
@@ -389,32 +389,32 @@
 
 		 	if(!empty($errors)){
 				fatal_error($errors, $debugs);
-		 	}else{	
+		 	}else{
 				$returnValue = null;
 				$getter = "get".capitalise($propertyName);
 				if($this->$getter() && array_key_exists($viewKey,$this->$propertyName)){
 					$collection = $this->$getter();
 					$returnValue = $collection[$viewKey];
-					
+
 					if($remove){
 						unset($collection[$viewKey]);
-				
+
 						$setter = "set".capitalise($propertyName);
 						$this->$setter($collection);
 					}
 				}
-				
+
 				return $returnValue;
 		 	}
 		}
-		 
+
 		/*
 		 * Simply calls viewFromX with remove set to true.
 		 */
 		protected function takeFromX($methodName, $propertyName, $viewKey){
 			return $this->viewFromX($methodName, $propertyName, $viewKey, true);
 		}
-		 
+
 		/*
 		 * Returns true if all object properties of this and otherObject are the same
 		 */
@@ -422,16 +422,16 @@
 			if(get_class($this) !== get_class($otherObject)){
 				return false;
 			}
-			
+
 			$class = Mirror::reflectClass($this);
 			$classProperties = $class->getProperties();
 			$equal = true;
-			
+
 			for($i = 0; $i < sizeof($classProperties); $i++){
-				$propertyName = $classProperties[$i]->getName();				
-				$propertyName = strtoupper(substr($propertyName,0,1)) . substr($propertyName,1);				
+				$propertyName = $classProperties[$i]->getName();
+				$propertyName = strtoupper(substr($propertyName,0,1)) . substr($propertyName,1);
 				$getter = "get".capitalise($propertyName);
-				
+
 				if($classProperties[$i]->getAnnotation()->isCollection()){
 					$equal = ($equal && $this->compareCollections($this->$getter(),$otherObject->$getter()));
 				}else if($classProperties[$i]->getAnnotation()->isObject()){
@@ -444,17 +444,17 @@
 					$equal = ($equal && ($this->$getter() === $otherObject->$getter()));
 				}
 			}
-			
+
 		  	return $equal;
 		  }
-		  
+
 		  /*
 		   * Default top level behaviour that allows WadadliClasses to be treated as strings
 		   */
 		  public function __toString(){
 			return "";
 		  }
-		  
+
 		  /*
 		   * Method returns the default value for each field annotation type
 		   */
@@ -471,7 +471,7 @@
 				return null;
 			}
 		  }
-		  
+
 		  //Compares collection properties recursively
 		  private function compareCollections($a, $b){
 			if(is_null($a) && is_null($b)){
@@ -479,14 +479,14 @@
 			}else if(is_null($a) || is_null($b)){
 				return false;
 			}
-			
+
 			if(sizeof($a) != sizeof($b)){
 				return false;
 			}
-			
+
 			$aValues = array_values($a);
 			$bValues = array_values($b);
-			
+
 			$equals = true;
 			for($i=0; $i<sizeof($aValues); $i++){
 				if(is_null($aValues[$i])){
@@ -499,7 +499,7 @@
 					$equals = $equals && ($aValues[$i] === $bValues[$i]);
 				}
 			}
-			
+
 			return $equals;
 		  }
 	}

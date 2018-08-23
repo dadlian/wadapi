@@ -1,8 +1,8 @@
 <?php
 	class Sorter extends WadadliClass{
-		/** @Collection(type=@Object(class='Criterion')) */
+		/** @Collection(type=@WadapiObject(class='Criterion')) */
 		protected $criteria;
-		
+
 		/*
 		 * Adds a Criterion object to the criteria collection, converting non-string values
 		 * to strings where applicable.
@@ -12,15 +12,15 @@
 				warning(UNEXPECTED_ARGUMENT_WARNING, "Sorter criterion should have string fields, ".gettype($field)." given.");
 				return;
 			}
-			
+
 			if(!is_string($order)){
 				warning(UNEXPECTED_ARGUMENT_WARNING, "Sorter criterion should have string order, ".gettype($order)." given.");
 				return;
 			}
-			
+
 			$this->appendToCriteria(new Criterion($field, $order, array()));
 		}
-		
+
 		/*
 		 * Removes all criteria from the criteria collection
 		 */
