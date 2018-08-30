@@ -2,10 +2,10 @@
 	class XMLGateway extends Gateway{
 		//Pointer to root node of the xml document to which this gateway provides access
 		private $xmlRoot;
-		
+
 		/** @File */
 		protected $datasource;
-		
+
 		/*
 		 * XMLGateway constructor initialises xmlRoot
 		 */
@@ -26,21 +26,21 @@
 			$propertyName = (sizeof($arguments)>1)?$arguments[1]:"";
 			$propertyValue = (sizeof($arguments)>2)?$arguments[2]:"None";
 			$comparisonType = (sizeof($arguments)>3)?$arguments[3]:self::IS_EQUAL;
-			
+
 			$findResults = array();
-			
+
 			if(!$this->checkFindParameters($className, $propertyName, $propertyValue, $comparisonType)){
 				return $findResults;
 			}
-			
+
 			$className = strtolower($className);
 			$listName = "{$className}list";
 			$objectListNode = $this->xmlRoot->$listName;
-			
+
 			if(!$objectListNode){
 				return $findResults;
 			}
-			
+
 			//If searching for an object by ID, look for it in the gateway cache.
 			if($propertyName == 'id' && $comparisonType == self::IS_EQUAL){
 				if($cachedObject = QuarterMaster::release($propertyValue)){
@@ -48,16 +48,16 @@
 					return $findResults;
 				}
 			}
-			
+
 			if($propertyName && $propertyValue !== "None"){
 				$property = Mirror::reflectProperty($className, $propertyName);
 				foreach($objectListNode->$className as $child){
 					$comparisonResult = false;
-					
+
 					if(!$child){
 						continue;
 					}
-					
+
 					if($property->getAnnotation()->isObject()){
 						$childObject = $this->loadObject($classname,$child);
 						$comparisonResult = $this->compare($childObject, $propertyValue, $comparisonType);
@@ -67,10 +67,10 @@
 					}else if($property->getAnnotation()->isUrl()){
 						$url = new URLPattern($propertyValue);
 						$comparisonResult = $url->match((string)$child->$propertyName);
-					}else{						
+					}else{
 						$comparisonResult = eval("return \$child->\$propertyName $comparisonType \$propertyValue;");
 					}
-					
+
 					if($comparisonResult == true){
 						$findResults[] = $this->loadObject($className,$child);
 					}
@@ -80,10 +80,10 @@
 					$findResults[] = $this->loadObject($className,$child);
 				}
 			}
-			
+
 			return $findResults;
 		}
-		
+
 		/*
 		 * Saves the given object to the datasource. If it already exists, the entry is updated. If objects of this type are not yet
 		 * stored, an appropriate object list is created.
@@ -92,27 +92,27 @@
 			if(!is_array($saveObjects)){
 				$saveObjects = array($saveObjects);
 			}
-			
+
 			$xmlRoot = $this->xmlRoot;
-			
+
 			//Load a list of all classes currently stored in the datasource
 			$storedClassListNodes = $xmlRoot->children();
 			$storedClassLists = array();
 			foreach($storedClassListNodes as $classListNode){
-				$storedClassLists[] = substr($classListNode->getName(), 0, sizeof($classListNode->getName()) - 5);
+				$storedClassLists[] = substr($classListNode->getName(), 0, strlen($classListNode->getName()) - 4);
 			}
-			
+
 			foreach($saveObjects as $object){
 				if(!is_object($object) || !$this->checkUpdateParameters($object)){
 					fatal_error(DATA_MODIFY_ERROR, "Only objects of PersistentClass can be saved via a Gateway");
 					return;
 				}
-				
+
 				$objectClass = strtolower(get_class($object));
 				if(!in_array($objectClass, $storedClassLists)){
 					$xmlRoot->addChild("{$objectClass}list");
 				}
-				
+
 				//Try to find $object in class list
 				$classList = $this->findNode("{$objectClass}list", $xmlRoot);
 				$objectFound = false;
@@ -121,27 +121,27 @@
 					if((string)$idNode == $object->getId()){
 						$objectFound = true;
 						break;
-					}			
+					}
 				}
-				
+
 				//Delete old saved object if it already exists
 				if($objectFound){
 					$this->delete($object);
-				}				
-				
+				}
+
 				$this->insertObject($object, $classList);
 			}
-			
+
 			$this->xmlRoot = $xmlRoot;
 			$dom = new DomDocument('1.0');
 			$dom->preserveWhiteSpace = false;
 			$dom->formatOutput = true;
 			$dom->loadXML($this->xmlRoot->asXML());
 			$dom->save(SettingsManager::getSetting('Install','Project Path')."/".$this->getDatasource());
-			
+
 			return true;
 		}
-		
+
 		/*
 		 * Removes the node corresponding to $loadObject from the data source, if it exists
 		 */
@@ -149,7 +149,7 @@
 			if(!is_array($deleteObjects)){
 				$deleteObjects = array($deleteObjects);
 			}
-			
+
 			foreach($deleteObjects as $object){
 				if(!$this->checkUpdateParameters($object)){
 					if(is_object($object)){
@@ -157,14 +157,14 @@
 					}else{
 						$type = gettype($object);
 					}
-					
+
 					warning(DATA_MODIFY_ERROR, "XMLGateway can only save and delete persistent classes. $type is not a PersistentClass.");
 					return;
 				}
-				
+
 				$objectClass = strtolower(get_class($object));
 				$objectClassList = $this->findNode("{$objectClass}list", $this->xmlRoot);
-				
+
 				//Search for index of class list in file and object in class list to facilitate delete
 				$classLists = $this->xmlRoot->children();
 				foreach($classLists as $classList){
@@ -180,28 +180,28 @@
 							}
 							$objectCounter++;
 						}
-						
+
 						break;
 					}
 				}
 			}
-			
+
 			$this->xmlRoot->saveXml(SettingsManager::getSetting('Install','Project Path')."/".$this->getDatasource());
 			return true;
 		}
-		
+
 		/*
 		 * Updates XML datasource as well as $xmlRoot
 		 */
-		private function setXmlRoot($datasource){		
+		private function setXmlRoot($datasource){
 			@$this->xmlRoot = simplexml_load_file($datasource);
-			
+
 			if(!is_object($this->xmlRoot)){
 				fatal_error(DATA_ACCESS_ERROR, "An XMLGateway cannot be created from non well-formed xml datasource $datasource.");
 				return;
 			}
 		}
-		
+
 		/*
 		 * Search the XML tree for the first node with the specified $nodeName, starting at the $root node
 		 */
@@ -211,17 +211,17 @@
 			}else if($root->count() == 0){
 				return null;
 			}
-			
+
 			foreach($root->children() as $child){
 				$childResult = $this->findNode($nodeName, $child);
 				if($childResult != null){
 					return $childResult;
 				}
 			}
-			
+
 			return null;
 		}
-		
+
 		/*
 		 * Loads an object from an XML node using reflection to determine the object structure
 		 */
@@ -229,7 +229,7 @@
 			if(!$node || $this->isLeaf($node)){
 				return null;
 			}
-			
+
 			$constructorArray = array();
 			$objectID = (string)$node->id;
 			if($objectID){
@@ -237,17 +237,17 @@
 					return $cachedObject;
 				}
 			}
-		
+
 			$class = Mirror::reflectClass($className);
-			
+
 			foreach($class->getProperties(false) as $property){
 				$propertyName = strtolower($property->getName());
 				$propertyValue = $node->$propertyName;
-				
+
 				if($property->getAnnotation()->isObject()){
 					$subObjectID = $propertyValue->id;
 					$subObjectClass = $propertyValue->type;
-					
+
 					if($subObjectID){
 						$constructorArray[] = $subObjectClass::bindInstance($subObjectID, $this);
 					}else{
@@ -264,22 +264,22 @@
 					$constructorArray[] = (string)$propertyValue;
 				}
 			}
-			
+
 			$objectInstance = $class->newInstanceArgs($constructorArray);
 			QuarterMaster::store($objectInstance);
 			return $objectInstance;
-		}		
-		
+		}
+
 		/*
 		 * Loads a list from an XML Node using the $listType to determine how it should be loaded.
 		 */
 		private function loadList($node, $listType){
 			$childList = array();
-			
+
 			if(!$node){
 				return $childList;
 			}
-			
+
 			foreach($node->children() as $listElement){
 				if($listType->isCollection()){
 					$listElementChildren = $listElement->children();
@@ -295,49 +295,49 @@
 				}else{
 					$nextElement = (string)$listElement;
 				}
-				
+
 				if(preg_match("/{$node->getName()}[0-9]+/", $listElement->getName())){
 					$childList[] = $nextElement;
 				}else{
 					$childList[$listElement->getName()] = $nextElement;
 				}
 			}
-			
+
 			return $childList;
 		}
-		
+
 		/*
 		 * Inserts an object into the given parent node, with the given name is specified.
 		 */
-		private function insertObject($object, &$root, $nodeName = ""){			
-			$objectClass = get_class($object);
-			
+		private function insertObject($object, &$root, $nodeName = ""){
+			$objectClass = $object?get_class($object):"";
+
 			if(!$nodeName){
 				$nodeName = $objectClass;
 			}
-			
-			$root->addChild(strtolower($nodeName));	
+
+			$root->addChild(strtolower($nodeName));
 			$objectNode = $this->lastInserted($root);
-					
+
 			if($nodeName != $objectClass){
 				$objectNode->addAttribute("type", strtolower($objectClass));
 			}
-			
+
 			//if $object is null leave inserted node empty
 			if(!$object){
 				return;
 			}
-			
+
 			$class = Mirror::reflectClass($object);
 			foreach($class->getProperties() as $property){
 				$propertyName = $property->getName();
 				$getterMethod = "get".capitalise($propertyName);
 				$propertyValue = $object->$getterMethod();
-				
+
 				if(!$property->getAnnotation()->isObject() && !$property->getAnnotation()->isCollection()){
 					$objectNode->addChild($propertyName, $propertyValue);
 				}
-				
+
 				if($property->getAnnotation()->isObject()){
 					$this->insertObject($propertyValue, $objectNode, $propertyName);
 				}else if($property->getAnnotation()->isCollection()){
@@ -345,7 +345,7 @@
 				}
 			}
 		}
-		
+
 		/*
 		 * Inserts the provided list into the given parent node with the specified name
 		 */
@@ -353,25 +353,25 @@
 			if(!is_array($list) || sizeof($list) == 0){
 				return;
 			}
-			
+
 			//Add list node to root
 			$root->addChild($nodeName);
 			$listNode = $this->lastInserted($root);
-			
+
 			foreach($list as $key => $element){
 				if(is_int($key)){
 					$elementName = "$nodeName$key";
 				}else{
 					$elementName = str_replace(" ","-",strval($key));
 				}
-				
+
 				//Add element node to list
 				if(!is_object($element) && !is_array($element)){
 					if(is_bool($element)){
 						if(!$element){
 							$element = 0;
 						}
-						
+
 						$listNode->addChild($elementName, $element);
 					}else{
 						$listNode->addChild($elementName, $element);
@@ -379,9 +379,9 @@
 				}else{
 					$listNode->addChild($elementName);
 				}
-				
+
 				$elementNode = $this->lastInserted($listNode);
-				
+
 				if(is_object($element)){
 					$this->insertObject($element, $elementNode, get_class($element));
 				}else if(is_array($element)){
@@ -389,16 +389,16 @@
 				}
 			}
 		}
-		
+
 		/*
 		 * Returns the most recently object child node of root
 		 */
 		private function lastInserted(&$root){
 			$rootChildren = $root->children();
 			$lastChildIndex = sizeof($rootChildren) - 1;
-			return $rootChildren[$lastChildIndex];		
+			return $rootChildren[$lastChildIndex];
 		}
-		
+
 		/*
 		 * Compares both argument objects according to the provided comparison type
 		 */
@@ -454,7 +454,7 @@
 		 		}
 		 	}
 		 }
-		 
+
 		/*
 		 * Checks whether the given element is in the given list
 		 */
@@ -462,7 +462,7 @@
 			if(!is_array($list) || sizeof($list) == 0){
 				return false;
 			}
-			
+
 			$comparisonResult = false;
 			foreach($list as $listElement){
 				if(is_object($element)){
@@ -470,17 +470,17 @@
 				}else{
 					$elementCompare = eval("return '$element' $comparisonType '$listElement';");
 				}
-				
+
 				if($comparisonType == self::IS_EQUAL){
 					$comparisonResult = $comparisonResult || $elementCompare;
 				}else{
 					$comparisonResult = $comparisonResult && $elementCompare;
 				}
 			}
-			
+
 			return $comparisonResult;
 		}
-		
+
 		/*
 		 * Determines whether the specified node is a leaf node or not
 		 */

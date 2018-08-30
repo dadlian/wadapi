@@ -85,6 +85,13 @@
 		 */
 		public static function bindInstance($id, $gateway){
 			$currentClass = get_called_class();
+			$reflectedClass = Mirror::reflectClass($currentClass);
+			if($reflectedClass->isAbstract() && $reflectedClass->getDescendants()){
+				$currentClass = $reflectedClass->getDescendants()[0]->getName();
+			}else{
+				return null;
+			}
+
 			$instance = new $currentClass();
 
 			$instance->setId($id);

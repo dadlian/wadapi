@@ -18,6 +18,9 @@
 		/** @Boolean(default=false) */
 		protected $disabled;
 
+		/** @WadapiObject(class='TokenProfile') */
+		protected $profile;
+
 		protected function refresh($lifetime=0){
 			$accessKey = md5((time()/rand()) * rand());
 			$accessSecret = md5((time()/rand()) * rand());

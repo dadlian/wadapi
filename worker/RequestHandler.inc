@@ -297,7 +297,6 @@
 
 			//Overide Global Acceptables Setting with Endpoint Settings if they exist
 			$endpoint = self::$endpoint?self::$endpoint:$endpointsGateway->findUnique('path',$requestURI);
-
 			if(!$endpoint){
 				ResponseHandler::missing("The requested endpoint /$requestURI does not exist on this server.");
 			}
@@ -353,7 +352,7 @@
 			$urlRoot = preg_replace("/\//","\/",SettingsManager::getSetting("install","urlroot"));
 
 			//Remove URL Root from Request URI
-			$requestURI = preg_replace("/$urlRoot/","",$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']);
+			$requestURI = preg_replace("/^$urlRoot/","",$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']);
 
 			//Remove Query String from Request URI
 			$requestURI = preg_replace("/\?".preg_replace("/\//","\/",preg_quote($_SERVER['QUERY_STRING']))."/","",$requestURI);
