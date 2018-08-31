@@ -4,7 +4,7 @@
 		private $annotation;
 
 		//Contains the project path for easy reference
-		private static $projectPath;
+		private static $path;
 
 		/*
 		 * Initialises class level members and then passes handling to parent
@@ -21,10 +21,9 @@
 				return;
 			}
 
-			if(!self::$projectPath){
-				global $settings;
-				$settingsFile = simplexml_load_file($settings?$settings:dirname(__FILE__)."/../../../conf/settings.xml");
-				self::$projectPath = $settingsFile->settingslist->settings[2]->values->projectpath;
+			if(!self::$path){
+				$settings = json_decode(file_get_contents(dirname(__FILE__)."/../../../settings.json"),true);
+				self::$path = $settings["install"]["path"];
 			}
 		}
 
@@ -112,7 +111,7 @@
 				|| ($annotation->isUrl() && $value && !filter_var((preg_match("/^http:\/\//",$value)?"":"http://").$value,FILTER_VALIDATE_URL))
 				|| ($annotation->isEmail() && $value && !filter_var($value,FILTER_VALIDATE_EMAIL))
 				|| ($annotation->isPhone() && $value && !preg_match("/^\+?[0-9\(\)\-\s]+$/",$value))
-				|| ($annotation->isFile() && $value && !file_exists(self::$projectPath."$value"))
+				|| ($annotation->isFile() && $value && !file_exists(self::$path."$value"))
 				|| ($annotation->isInteger() && !is_int($value))
 				|| (($annotation->isFloat() || $annotation->isMonetary()) && !is_numeric($value))
 				|| ($annotation->isBoolean() && !is_bool($value))

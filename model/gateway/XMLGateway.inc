@@ -10,11 +10,11 @@
 		 * XMLGateway constructor initialises xmlRoot
 		 */
 		public function __construct($initialDatasource){
-			global $settings;
-			$settingsFile = simplexml_load_file($settings?$settings:dirname(__FILE__)."/../../../conf/settings.xml");
-			$projectPath = $settingsFile->settingslist->settings[2]->values->projectpath;
-			parent::__construct(preg_replace("/".preg_replace("/\//","\/",$projectPath)."/","",$initialDatasource));
-			$this->setXmlRoot($projectPath.$this->getDatasource());
+			$settings = json_decode(file_get_contents(dirname(__FILE__)."/../../../settings.json"),true);
+			$path = $settings["install"]["path"];
+
+			parent::__construct(preg_replace("/".preg_replace("/\//","\/",$path)."/","",$initialDatasource));
+			$this->setXmlRoot($path.$this->getDatasource());
 		}
 
 		/*
@@ -137,7 +137,7 @@
 			$dom->preserveWhiteSpace = false;
 			$dom->formatOutput = true;
 			$dom->loadXML($this->xmlRoot->asXML());
-			$dom->save(SettingsManager::getSetting('Install','Project Path')."/".$this->getDatasource());
+			$dom->save(SettingsManager::getSetting('install','path')."/".$this->getDatasource());
 
 			return true;
 		}
@@ -186,7 +186,7 @@
 				}
 			}
 
-			$this->xmlRoot->saveXml(SettingsManager::getSetting('Install','Project Path')."/".$this->getDatasource());
+			$this->xmlRoot->saveXml(SettingsManager::getSetting('install','path')."/".$this->getDatasource());
 			return true;
 		}
 

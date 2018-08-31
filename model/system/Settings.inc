@@ -3,13 +3,14 @@
 		const INSTALL = "install";
 		const DATABASE = "database";
 		const LOGGING = "logging";
-		
+		const API = "api";
+
 		/** @WadapiString */
 		protected $name;
-		
+
 		/** @Collection(type=@WadapiString) */
 		protected $values;
-		
+
 		/*
 		 * Redefined getter allows direct indexing into values array
 		 */
@@ -20,7 +21,7 @@
 					return $this->values[strtolower($matches[1])];
 			}else{
 				return parent::__call($method,$arguments);
-			}		
+			}
 		}
 	}
 ?>

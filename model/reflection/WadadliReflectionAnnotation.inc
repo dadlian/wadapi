@@ -46,7 +46,7 @@
 		private $width;
 
 		//Contains the project path for easy reference
-		private static $projectPath;
+		private static $path;
 
 		public function __construct($annotation){
 			$annotationClass = null;
@@ -58,9 +58,8 @@
 				return;
 			}
 
-			global $settings;
-			$settingsFile = simplexml_load_file($settings?$settings:dirname(__FILE__)."/../../../conf/settings.xml");
-			$projectPath = $settingsFile->settingslist->settings[0]->values->projectpath;
+			$settings = json_decode(file_get_contents(dirname(__FILE__)."/../../../settings.json"),true);
+			$path = $settings["install"]["path"];
 
 			$this->type = $annotationClass;
 
@@ -107,7 +106,7 @@
 									FILTER_VALIDATE_URL) ||
 				   $this->isEmail() && !filter_var($annotation->default,FILTER_VALIDATE_EMAIL) ||
 				   $this->isPhone() && !preg_match("/\+?[0-9\s\-\)\(]+/",$annotation->default) ||
-				   $this->isFile() && !file_exists(self::$projectPath.$annotation->default) ||
+				   $this->isFile() && !file_exists(self::$path.$annotation->default) ||
 				   $this->isInteger() && !is_int($annotation->default) ||
 				   $this->isBoolean() && !is_bool($annotation->default) ||
 				   ($this->isFloat() || $this->isMonetary()) && !is_numeric($annotation->default)){
@@ -134,7 +133,7 @@
 					   $this->isUrl() && !filter_var((preg_match("/^https?:\/\//",$value)?"":"//").$value,FILTER_VALIDATE_URL) ||
 					   $this->isEmail() && !filter_var($value,FILTER_VALIDATE_EMAIL) ||
 					   $this->isPhone() && !preg_match("/\+?[0-9\s\-\)\(]+/",$value) ||
-					   $this->isFile() && !file_exists(self::$projectPath.$value) ||
+					   $this->isFile() && !file_exists(self::$path.$value) ||
 					   $this->isInteger() && !is_int($value) ||
 					   $this->isBoolean() && !is_bool($value) ||
 					   ($this->isFloat() || $this->isMonetary()) && !is_numeric($value)){
@@ -190,10 +189,9 @@
 				$this->width = $annotation->width;
 			}
 
-			if(!self::$projectPath){
-				global $settings;
-				$settingsFile = simplexml_load_file($settings?$settings:dirname(__FILE__)."/../../../conf/settings.xml");
-				self::$projectPath = $settingsFile->settingslist->settings[0]->values->projectpath;
+			if(!self::$path){
+				$settings = json_decode(file_get_contents(dirname(__FILE__)."/../../../settings.json"),true);
+				self::$path = $settings["install"]["path"];
 			}
 		}
 

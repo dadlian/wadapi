@@ -29,11 +29,11 @@
 		}
 
 		protected function getBase(){
-			return ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").SettingsManager::getSetting("install","urlroot");
+			return ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").SettingsManager::getSetting("install","url");
 		}
 
 		protected function getRegexBase(){
-			return "/^https?:\/\/".preg_replace("/\//","\/",preg_quote(SettingsManager::getSetting("install","urlroot")));
+			return "/^https?:\/\/".preg_replace("/\//","\/",preg_quote(SettingsManager::getSetting("install","url")));
 		}
 
 		protected function getFromContent($argument,$default=""){
@@ -90,7 +90,7 @@
 				}
 			}
 
-			$uri = ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").SettingsManager::getSetting("install","urlroot")."/".RequestHandler::getRequestURI();
+			$uri = ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").SettingsManager::getSetting("install","url")."/".RequestHandler::getRequestURI();
 			ResponseHandler::retrieved($payload,$uri);
 
 		}

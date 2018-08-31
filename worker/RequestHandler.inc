@@ -28,7 +28,7 @@
 				}
 
 				//Extract the desired endpoint based on the project URL Root
-				$regex = ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https:":"http:")."\/\/(www\.)?".preg_replace("/\//","\/",SettingsManager::getSetting("install","urlroot"));
+				$regex = ((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https:":"http:")."\/\/(www\.)?".preg_replace("/\//","\/",SettingsManager::getSetting("install","url"));
 				$fullPath = urldecode(((array_key_exists('HTTPS',$_SERVER) && $_SERVER['HTTPS'])?"https://":"http://").RequestHandler::getHost().self::$request->getEndpoint());
 				$requestURI = implode("/",array_compress(preg_split("/\//", preg_replace("/$regex/","",$fullPath))));
 				self::$requestURI = implode("/",array_compress(preg_split("/\//",$requestURI)));
@@ -213,7 +213,7 @@
 
 				$image = @imagecreatefromstring(self::$request->getBody());
 				if($image){
-					$tmpFile = SettingsManager::getSetting("install","projectpath")."/temp-image-validate-".time();
+					$tmpFile = SettingsManager::getSetting("install","path")."/temp-image-validate-".time();
 					fwrite(fopen($tmpFile,"w"),self::$request->getBody());
 					$mimeType = finfo_file(finfo_open(FILEINFO_MIME_TYPE),$tmpFile);
 					unlink($tmpFile);
@@ -237,6 +237,10 @@
 			//Handle Native Wadapi Calls. These override calls to the same endpoint in the userspace, if any.
 			$requestURI = self::extractRequestURI();
 			switch($requestURI){
+				case "wadapi/setup":
+					self::$endpoint = new Endpoint("Wadapi Setup",$requestURI,"WadapiSetup",array(),array(),array(),array(),array(),array());
+					self::$isUtility = true;
+					break;
 				case "wadapi/rebuild":
 					self::$endpoint = new Endpoint("Wadapi Database Rebuilder",$requestURI,"WadapiRebuildDatabase",array(),array(),array(),array(),array(),array());
 					self::$isUtility = true;
@@ -349,10 +353,10 @@
 
 		private static function extractRequestURI(){
 			//Load URL Root from settings
-			$urlRoot = preg_replace("/\//","\/",SettingsManager::getSetting("install","urlroot"));
+			$url = preg_replace("/\//","\/",SettingsManager::getSetting("install","url"));
 
 			//Remove URL Root from Request URI
-			$requestURI = preg_replace("/^$urlRoot/","",$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']);
+			$requestURI = preg_replace("/^$url/","",$_SERVER['HTTP_HOST'].$_SERVER['REQUEST_URI']);
 
 			//Remove Query String from Request URI
 			$requestURI = preg_replace("/\?".preg_replace("/\//","\/",preg_quote($_SERVER['QUERY_STRING']))."/","",$requestURI);

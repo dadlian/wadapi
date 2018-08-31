@@ -1,28 +1,90 @@
 <?php
-	class EndpointsGateway extends XMLGateway{
-		public function __construct(){
-			//Copy User Endpoints to Core
-			$projectPath = SettingsManager::getSetting("install","projectPath");
-			copy("$projectPath/endpoints.xml","$projectPath/core/endpoints.xml");
+	class EndpointsGateway{
+		private $endpoints;
 
-			parent::__construct("core/endpoints.xml");
+		public function __construct(){
+			//Load User Endpoints
+			$path = SettingsManager::getSetting("install","path");
+			$userEndpoints = json_decode(file_get_contents("$path/endpoints.json"),true);
+			$this->endpoints = array_key_exists("endpoints",$userEndpoints)?$userEndpoints['endpoints']:array();
 
 			//Add System Endpoints
 			$loginWrite = new Role(["write"]);
 			$loginReadWrite = new Role(["read","write"]);
 
-			$systemEndpoints = array();
-			$systemEndpoints[] = new Endpoint("Access Collection","access","AccessCollection",["login"=>$loginWrite],[],["role"]);
-			$systemEndpoints[] = new Endpoint("Access Resource","access/@","AccessResource",["login"=>$loginReadWrite],["access"],["role"]);
-			$systemEndpoints[] = new Endpoint("Token Collection","access/@/tokens","TokenCollection",["login"=>$loginWrite],["access"],[]);
-			$systemEndpoints[] = new Endpoint("Token Resource","access/@/tokens/active","TokenResource",["login"=>$loginWrite],["access"],[]);
+			$this->endpoints[] = [
+	      "name"=>"Access Collection",
+	      "path"=>"access",
+	      "controller"=>"AccessCollection",
+	      "roles"=>["login"=>$loginWrite],
+	      "parameters"=>[],
+	      "requirements"=>["role"]
+			];
 
-			$this->save($systemEndpoints);
+			$this->endpoints[] = [
+	      "name"=>"Access Resource",
+	      "path"=>"access/@",
+	      "controller"=>"AccessResource",
+	      "roles"=>["login"=>$loginReadWrite],
+	      "parameters"=>["access"],
+	      "requirements"=>["role"]
+			];
+
+			$this->endpoints[] = [
+	      "name"=>"Token Collection",
+	      "path"=>"access/@/tokens",
+	      "controller"=>"TokenCollection",
+	      "roles"=>["login"=>$loginWrite],
+	      "parameters"=>["access"],
+	      "requirements"=>[]
+			];
+
+			$this->endpoints[] = [
+	      "name"=>"Token Resource",
+	      "path"=>"access/@/tokens/active",
+	      "controller"=>"TokenResource",
+	      "roles"=>["login"=>$loginWrite],
+	      "parameters"=>["access"],
+	      "requirements"=>[]
+			];
 		}
 
-		public function find(){
-			$arguments = array_merge(array('Endpoint'),func_get_args());
-			return call_user_func_array(array('parent','find'), $arguments);
+		public function find($property,$value,$unique=false){
+			$matchingEndpoints = array();
+
+			foreach($this->endpoints as $endpoint){
+				if($property == "path"){
+					$url = new URLPattern($value);
+					$isMatch = $url->match($endpoint[$property]);
+				}else{
+					$isMatch = array_key_exists($property,$endpoint) && $endpoint[$property] == $value;
+				}
+
+				if($isMatch){
+					$matchingEndpoints[] = new Endpoint(
+						$endpoint['name'],
+						$endpoint['path'],
+						$endpoint['controller'],
+						$endpoint['roles'],
+						$endpoint['parameters'],
+						$endpoint['requirements']
+					);
+
+					if($unique){
+						break;
+					}
+				}
+			}
+
+			if($unique){
+				return(sizeof($matchingEndpoints) > 0)?$matchingEndpoints[0]:null;
+			}else{
+				return $matchingEndpoints;
+			}
+		}
+
+		public function findUnique($property,$value){
+			return $this->find($property,$value,true);
 		}
 	}
 ?>

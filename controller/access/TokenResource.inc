@@ -3,8 +3,8 @@
 		public function delete(){
 			$token = $this->getResourceObject("APIToken","id",$this->viewFromArguments("access"));
 
-			if($token->getRole() == "root"){
-				ResponseHandler::conflict("The root access tokens cannot be invalidated.");
+			if(in_array($token->getRole(),array("root","login"))){
+				ResponseHandler::conflict("The {$token->getRole()} access tokens cannot be invalidated.");
 			}else{
 				CryptKeeper::bury($token);
 				ResponseHandler::deleted("Token: /".RequestHandler::getRequestURI().", has been invalidated.");

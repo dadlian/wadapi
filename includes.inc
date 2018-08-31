@@ -96,15 +96,12 @@
 	require_once(dirname(__FILE__)."/model/system/Warrant.inc");
 
 	//Include Utility Endpoints
+	require_once(dirname(__FILE__)."/controller/utilities/UtilityController.inc");
+	require_once(dirname(__FILE__)."/controller/utilities/WadapiSetup.inc");
 	require_once(dirname(__FILE__)."/controller/utilities/WadapiRebuildDatabase.inc");
 
-	//Initialise Custom Settings Files
-	if(isset($settings)){
-		SettingsManager::changeSource($settings);
-	}
-
 	//Include Wadadli Project Files
-	$projectPath = SettingsManager::getSetting("install","projectPath");
-	require_all("$projectPath/controller");
-	require_all("$projectPath/model");
+	$path = SettingsManager::getSetting("install","path");
+	require_all("$path/controller");
+	require_all("$path/model");
 ?>

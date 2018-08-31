@@ -26,23 +26,6 @@
 			ResponseHandler::modified($payload,$token->getURI());
 		}
 
-		protected function delete(){
-			$token = $this->getResourceObject("APIToken","id",$this->viewFromArguments("access"));
-
-			$sqlGateway = new SQLGateway();
-			$searcher = new Searcher();
-			$searcher->addCriterion("token",Criterion::EQUAL,$token);
-
-			$profile = $token->getProfile();
-			if($profile){
-				CryptKeeper::bury($profile);
-			}
-
-			CryptKeeper::bury($token);
-
-			ResponseHandler::deleted("Client access: /".RequestHandler::getRequestURI().", has been revoked.");
-		}
-
 		protected function isConsistent($modifiedDate,$eTag){
 			$token = $this->getResourceObject("APIToken","id",$this->viewFromArguments("access"));
 			return $modifiedDate == $token->getModified() && $eTag == md5($token->getETag());

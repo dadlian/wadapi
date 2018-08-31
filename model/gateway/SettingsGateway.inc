@@ -1,12 +1,34 @@
 <?php
-	class SettingsGateway extends XMLGateway{
-		public function __construct($source="wadadli/conf/settings.xml"){
-			parent::__construct($source);
+	class SettingsGateway{
+		private $settings;
+
+		public function __construct(){
+			//Load User Settings
+			$this->settings = json_decode(file_get_contents(dirname(__FILE__)."/../../../settings.json"),true);
 		}
-		
-		public function find(){
-			$arguments = array_merge(array('Settings'),func_get_args());
-			return call_user_func_array(array('parent','find'), $arguments);
+
+		public function find($name,$unique=false){
+			$matchingSettings = array();
+
+			foreach($this->settings as $setting => $values){
+				if($name == $setting){
+					$matchingSettings[] = new Settings($setting,$values);
+
+					if($unique){
+						break;
+					}
+				}
+			}
+
+			if($unique){
+				return(sizeof($matchingSettings) > 0)?$matchingSettings[0]:null;
+			}else{
+				return $matchingSettings;
+			}
+		}
+
+		public function findUnique($name){
+			return $this->find($name,true);
 		}
 	}
 ?>
