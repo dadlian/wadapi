@@ -12,6 +12,6 @@
         }
     ],
     "scripts":{
-      "post-root-package-install": "Wadapi\\System\\ComposerScripts::setup"
+      "post-create-project-cmd": "Wadapi\\System\\ComposerScripts::setup"
     }
 }
