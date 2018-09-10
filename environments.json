@@ -1,0 +1,32 @@
+{
+  "development":{
+    "database":{
+      "hostname":"",
+      "database":"",
+      "username":"",
+      "password":"",
+      "prefix":""
+    },
+    "install":{
+      "url":""
+    },
+    "logging":{
+      "level":""
+    }
+  },
+  "production":{
+    "database":{
+      "hostname":"",
+      "database":"",
+      "username":"",
+      "password":"",
+      "prefix":""
+    },
+    "install":{
+      "url":""
+    },
+    "logging":{
+      "level":""
+    }
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "environment":"development",
+  "api":{
+    "formats":"application/json",
+    "languages":"*",
+    "charsets":"utf-8",
+    "roles":"administrator,user",
+    "utilitykey":""
+  }
+}
