@@ -5,8 +5,7 @@
       "path":"hello",
       "controller":"HelloWorldController",
       "roles":{},
-      "parameters":[],
-      "requirements":[]
+      "parameters":[]
     }
   ]
 }

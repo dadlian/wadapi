@@ -2,7 +2,8 @@
     "name": "dadlian/wadapi",
     "type": "project",
     "require": {
-        "dadlian/wadapi-framework": "^1.0"
+        "dadlian/wadapi-framework": "^1.0",
+        "php-amqplib/php-amqplib": "^2.11"
     },
     "license": "MIT",
     "authors": [

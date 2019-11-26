@@ -7,6 +7,13 @@
       "password":"",
       "prefix":""
     },
+    "messaging":{
+      "hostname":"",
+      "port":"",
+      "username":"",
+      "password":"",
+      "exchange":""
+    },
     "install":{
       "url":""
     },
@@ -21,6 +28,13 @@
       "username":"",
       "password":"",
       "prefix":""
+    },
+    "messaging":{
+      "hostname":"",
+      "port":"",
+      "username":"",
+      "password":"",
+      "exchange":""
     },
     "install":{
       "url":""
