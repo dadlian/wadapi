@@ -14,9 +14,6 @@
       "password":"",
       "exchange":""
     },
-    "install":{
-      "url":""
-    },
     "logging":{
       "level":""
     }
@@ -35,9 +32,6 @@
       "username":"",
       "password":"",
       "exchange":""
-    },
-    "install":{
-      "url":""
     },
     "logging":{
       "level":""
