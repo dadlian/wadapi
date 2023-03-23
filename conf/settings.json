@@ -1,11 +1,27 @@
 {
-    "environment": "development",
     "api": {
-        "formats": "application/json",
         "auth": "none",
-        "languages": "*",
         "charsets": "utf-8",
-        "roles": "administrator,user",
+        "consistency": true,
+        "formats": "application/json",
+        "languages": "*",
         "utilitykey": ""
+    },
+    "database":{
+        "hostname":"",
+        "database":"",
+        "username":"",
+        "password":"",
+        "prefix":""
+    },
+    "logging":{
+        "level":""
+    },
+    "messaging":{
+        "hostname":"",
+        "port":"",
+        "username":"",
+        "password":"",
+        "exchange":""
     }
 }
