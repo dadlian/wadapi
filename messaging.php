@@ -5,7 +5,7 @@
   use Wadapi\Messaging\SubscriptionManager;
 
 	define('SCRIPT_START', microtime(true));
-  define('PROJECT_PATH', dirname(__FILE__));
+  define('PROJECT_PATH', dirname(__FILE__)."/project");
   define('CONFIG', PROJECT_PATH."/conf");
   define('MAPPINGS', PROJECT_PATH."/mappings");
 
