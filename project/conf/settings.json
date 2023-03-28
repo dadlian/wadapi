@@ -12,6 +12,7 @@
         "database":"",
         "username":"",
         "password":"",
+        "driver":"",
         "prefix":""
     },
     "logging":{
